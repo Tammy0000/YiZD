@@ -1,0 +1,4 @@
+1.2.3-beta
+2023年2月14日09:56:272
+测试ChannelRealTimeHashtable修复重复添加通道问题
+Jedis引发的Attempting to read from a broken connection问题
