@@ -2,12 +2,14 @@ package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@Lazy
 public class YiChargeCustomerStartChargeService {
 
     /**
@@ -28,8 +31,20 @@ public class YiChargeCustomerStartChargeService {
      */
     private static final byte[] currentMoney = ByteUtils.toByte(999999, 4, false);
 
-    public void Start(YiChargeContext context, byte[] BCD, int muzzleNum, Channel channel, int Int_sequence) {
-        ByteBuf byteBuf = Unpooled.buffer();
+    /**
+     *
+     * @param context context
+     * @param muzzleNum 枪号
+     * @param channel channel
+     * 默认金额9999.99元，慎用
+     * 2023年2月15日13:13:21
+     */
+    public void Start(YiChargeContext context, int muzzleNum, Channel channel) {
+        byte[] temp = new byte[2];
+        temp[0] = 0x46;
+        temp[1] = 0x22;
+        int seq = ByteUtils.toInt(temp);
+        byte[] BCD = context.getBCD();
         byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
                 // 交易流水号
                 ByteUtils.toByte(0, 1)[0],
@@ -64,9 +79,157 @@ public class YiChargeCustomerStartChargeService {
                 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
                 //账户余额
                 currentMoney[0], currentMoney[1], currentMoney[2], currentMoney[3],
-        }, Int_sequence);
-        byteBuf.writeBytes(charge);
-        channel.writeAndFlush(byteBuf);
+        }, seq);
+        ChannelSendData.Send(charge, channel);
         log.info("桩号："+context.getStrBCD()+","+muzzleNum+"号枪发送充电指令成功");
+    }
+
+    /**
+     *
+     * @param context context
+     * @param muzzleNum 枪号
+     * @param channel channel
+     * @param Money 金额
+     * 金额
+     */
+    public void Start(YiChargeContext context, int muzzleNum, Channel channel, double Money) {
+        byte[] temp = new byte[2];
+        temp[0] = 0x46;
+        temp[1] = 0x22;
+        int seq = ByteUtils.toInt(temp);
+        byte[] BCD = context.getBCD();
+        /*
+          在数据库存入的是保留两位小数点的金额
+          例如数据库实际金额是12.34元，则发送电桩的数值是1234
+          所以要乘以100
+         */
+        int mon = (int) (Money * 100);
+        byte[] bytes_mon = ByteUtils.toByte(mon, 4, false);
+        byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
+                // 交易流水号
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
+                // 桩编号
+                BCD[0],
+                BCD[1],
+                BCD[2],
+                BCD[3],
+                BCD[4],
+                BCD[5],
+                BCD[6],
+                //启动枪号
+                ByteUtils.toByte(muzzleNum, 1)[0],
+                //逻辑卡号
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+                // 物理卡号
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+                //账户余额
+                bytes_mon[0],
+                bytes_mon[1],
+                bytes_mon[2],
+                bytes_mon[3],
+        }, seq);
+        ChannelSendData.Send(charge, channel);
+    }
+
+    /**
+     * @param context context
+     * @param PayData 交易流水
+     * @param LogicCard 逻辑卡号
+     * @param PhyCard 物理卡号
+     * @param muzzleNum 枪号
+     * @param channel channel
+     * @param Money 金额
+     */
+    public void Start(YiChargeContext context, byte[] PayData, byte[] LogicCard, byte[] PhyCard, int muzzleNum, Channel channel, double Money){
+        byte[] temp = new byte[2];
+        temp[0] = 0x46;
+        temp[1] = 0x22;
+        int seq = ByteUtils.toInt(temp);
+        byte[] BCD = context.getBCD();
+        /*
+          在数据库存入的是保留两位小数点的金额
+          例如数据库实际金额是12.34元，则发送电桩的数值是1234
+          所以要乘以100
+         */
+        int mon = (int) (Money * 100);
+        byte[] bytes_mon = ByteUtils.toByte(mon, 4, false);
+        byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
+                /*
+                交易流水
+                格式桩号（7bytes）+枪号（1byte）+年月日时分秒（6bytes）+自增序号（2bytes）
+                 */
+                //BCD编号7位
+                PayData[0],
+                PayData[1],
+                PayData[2],
+                PayData[3],
+                PayData[4],
+                PayData[5],
+                PayData[6],
+                //枪号1位
+                PayData[7],
+                //年月日时分秒6位
+                PayData[8],
+                PayData[9],
+                PayData[10],
+                PayData[11],
+                PayData[12],
+                PayData[13],
+                //自增序号2位
+                PayData[14],
+                PayData[15],
+                //以上是交易流水编号
+    //-------------------------------------------//
+    //___________________________________________//
+                // 桩编号
+                BCD[0],
+                BCD[1],
+                BCD[2],
+                BCD[3],
+                BCD[4],
+                BCD[5],
+                BCD[6],
+                //启动枪号
+                ByteUtils.toByte(muzzleNum, 1)[0],
+                //逻辑卡号
+                LogicCard[0],
+                LogicCard[1],
+                LogicCard[2],
+                LogicCard[3],
+                LogicCard[4],
+                LogicCard[5],
+                LogicCard[6],
+                LogicCard[7],
+                // 物理卡号
+                PhyCard[0],
+                PhyCard[1],
+                PhyCard[2],
+                PhyCard[3],
+                PhyCard[4],
+                PhyCard[5],
+                PhyCard[6],
+                PhyCard[7],
+                //账户余额
+                bytes_mon[0],
+                bytes_mon[1],
+                bytes_mon[2],
+                bytes_mon[3],
+        },seq);
+        ChannelSendData.Send(charge, channel);
     }
 }

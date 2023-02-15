@@ -1,14 +1,13 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 心跳请求的对应类别代码是0x03
@@ -17,6 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 public class YiDaHuaHeartbeatPileService {
+    @Resource
+    SearchSeq seq;
 
     //Start代表的是回应发送
     public void Start(YiChargeContext context, Channel channel) {
@@ -35,7 +36,7 @@ public class YiDaHuaHeartbeatPileService {
                 //0x00 心跳应答
                 data[8],
                 ByteUtils.toByte(0, 1)[0],
-        }, context.getInt_sequence());
+        }, seq.find(context.getStrBCD()));
         context.setMuzzleNum(ByteUtils.toInt(data[7]));
         context.setMuzzleStatus(ByteUtils.toInt(data[8]));
         ChannelSendData.Send(PONG, channel);

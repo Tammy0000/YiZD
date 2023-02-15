@@ -60,7 +60,7 @@ public class ChargeFilter {
     @Bean
     private void ChargeFilterinit() {
         try {
-            jedis = new Jedis(RedisAddress, RedisPort);
+            jedis = new Jedis("10.0.0.1", 6379);
         } catch (Exception e) {
             log.info("ChargeFilter初始化失败");
         }
@@ -132,7 +132,7 @@ public class ChargeFilter {
             log.info("启动充电结果:" + s);
         } else if (Int_typeData == DaHuaCmdEnum.交易记录.getCmd()) {
             log.info("开始验证交易请求回应");
-            payResponse.Start(context, context.getPayData(), context.getChannel(), context.getInt_sequence());
+            payResponse.Start(context, channel);
             log.info("交易验证请求发送完成");
         } else if (Int_typeData == DaHuaCmdEnum.远程停机命令回复.getCmd()) {
             int b = ByteUtils.toInt(context.getMessage_body()[7]);

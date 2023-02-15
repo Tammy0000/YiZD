@@ -1,10 +1,12 @@
 //package com.isandy.yizd.Service;
 //
+//import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.SearchSeq;
 //import io.netty.bootstrap.ServerBootstrap;
 //import io.netty.channel.nio.NioEventLoopGroup;
 //import lombok.extern.slf4j.Slf4j;
 //import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Lazy;
 //import org.springframework.stereotype.Component;
 //import redis.clients.jedis.Jedis;
 //
@@ -20,26 +22,8 @@
 //    int RedisPort;
 //
 //    @Bean
-//    ServerBootstrap serverBootstrap() {
-//        return new ServerBootstrap();
-//    }
-//
-//    @Bean
-//    NioEventLoopGroup nioEventLoopGroup() {
-//        return new NioEventLoopGroup();
-//    }
-//
-//    @Bean
-//    Jedis jedis() {
-//        try {
-//            Jedis jedis = new Jedis(RedisAddress, RedisPort);
-//            jedis.set("Test", "test");
-//            jedis.del("Test");
-//            log.info("Redis初始化完成");
-//            return jedis;
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
+//    SearchSeq seq() {
+//        return new SearchSeq();
 //    }
 //
 //}

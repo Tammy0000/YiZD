@@ -1,10 +1,7 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 
@@ -18,6 +15,8 @@ import javax.annotation.Resource;
 @Resource
 @Lazy
 public class YiDaHuaChargeWorkSetting {
+    @Resource
+    SearchSeq seq;
     /**
      *
      * @param context context
@@ -62,7 +61,7 @@ public class YiDaHuaChargeWorkSetting {
                 //充电桩最大允许输出功率 1BIN 表示 1%，最大 100%，最小
                 //30%
                 max,
-        }, context.getInt_sequence());
+        }, seq.find(context.getStrBCD()));
         ChannelSendData.Send(chargemax, channel);
     }
 }

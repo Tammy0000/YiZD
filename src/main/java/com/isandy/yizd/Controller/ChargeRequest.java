@@ -45,7 +45,7 @@ public class ChargeRequest {
     ChargeActiveStatusRedis cars;
 
     @Resource
-    YiChargeCustomerStartChargeService ccs;
+    YiChargeCustomerStartChargeService startChargeService;
 
     @Bean
     void ChargeRequestinit() {
@@ -141,12 +141,8 @@ public class ChargeRequest {
         } catch (NumberFormatException e) {
             return "输入枪号或BCD编码有误";
         }
-        byte[] temp = new byte[2];
-        temp[0] = 0x46;
-        temp[1] = 0x22;
-        int it = ByteUtils.toInt(temp);
-        ccs.Start(chargeMaps.getContext(), chargeMaps.getContext().getBCD(), i,
-                chargeMaps.getChannel(), it);
+        startChargeService.Start(chargeMaps.getContext(), i,
+                chargeMaps.getChannel());
         return BCD+"发送充电命令完成";
     }
 
@@ -178,16 +174,14 @@ public class ChargeRequest {
         } catch (NumberFormatException e) {
             return "输入枪号或BCD编码有误";
         }
-        css.Start(chargeMaps.getContext(), chargeMaps.getContext().getBCD(), i, chargeMaps.getChannel(),
-                chargeMaps.getContext().getInt_sequence());
+        css.Start(chargeMaps.getContext(), i, chargeMaps.getChannel());
         return "发送停止充电命令完成";
     }
 
     @GetMapping("/reboot/{BCD}")
     String Reboot(@PathVariable("BCD") String BCD) {
         ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
-        yiReboot.Start(chargeMaps.getContext(), chargeMaps.getContext().getBCD(),
-                chargeMaps.getChannel(), Integer.parseInt(jedis.get(BCD)));
+        yiReboot.Start(chargeMaps.getContext(), chargeMaps.getChannel());
         return "发送重启电桩命令成功";
     }
 

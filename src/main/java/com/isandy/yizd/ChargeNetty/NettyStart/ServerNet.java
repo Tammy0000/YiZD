@@ -22,7 +22,7 @@ public class ServerNet {
     @Resource
     CustomChannelInitializer initializer;
 
-    ServerBootstrap serverBootstrap;
+    ServerBootstrap bootstrap;
 
     @Value("${custom.NettyPort}")
     int Port;
@@ -32,8 +32,8 @@ public class ServerNet {
         log.info("开始初始化Netty");
         boss = new NioEventLoopGroup();
         worker = new NioEventLoopGroup();
-        serverBootstrap = new ServerBootstrap();
-        serverBootstrap
+        bootstrap = new ServerBootstrap();
+        bootstrap
                 .group(boss, worker)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_BACKLOG, 1024)

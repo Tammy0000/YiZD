@@ -1,16 +1,7 @@
 package com.isandy.yizd.ChargeNetty.Adapter;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargingCheckPileService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaHeartbeatPileService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaLoginRequest;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaPayResponse;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import com.isandy.yizd.ChargeNetty.Filter.ChargeFilter;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
-import com.isandy.yizd.dao.ChargeActiveStatusRedis;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -19,10 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
 
@@ -60,7 +48,7 @@ public class InChannel extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.info("异常信息： "+cause.getMessage());
+        log.info("异常信息： "+cause.toString());
         if (!ctx.channel().isActive()) {
             ctx.channel().close();
         }

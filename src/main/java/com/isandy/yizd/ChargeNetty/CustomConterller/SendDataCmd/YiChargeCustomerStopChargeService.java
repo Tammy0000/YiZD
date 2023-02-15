@@ -1,13 +1,13 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 2023年1月16日21:48:37
@@ -17,8 +17,17 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class YiChargeCustomerStopChargeService {
-    public void Start(YiChargeContext context, byte[] BCD, int muzzleNum, Channel channel, int Int_sequence) {
-        ByteBuf byteBuf = Unpooled.buffer();
+    @Resource
+    SearchSeq seq;
+
+    /**
+     *
+     * @param context context
+     * @param muzzleNum 枪号
+     * @param channel channel
+     */
+    public void Start(YiChargeContext context, int muzzleNum, Channel channel) {
+        byte[] BCD = context.getBCD();
         byte[] bytes = ResData.responseData(context, DaHuaCmdEnum.运营平台远程停机, new byte[]{
                 BCD[0],
                 BCD[1],
@@ -31,8 +40,7 @@ public class YiChargeCustomerStopChargeService {
                   停止枪号
                 */
                 ByteUtils.toByte(muzzleNum, 1)[0],
-        }, Int_sequence);
-        byteBuf.writeBytes(bytes);
-        channel.writeAndFlush(byteBuf);
+        }, seq.find(context.getStrBCD()));
+        ChannelSendData.Send(bytes, channel);
     }
 }

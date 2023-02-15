@@ -1,12 +1,14 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
  * 对应回应充电桩状态，回应代码是0x13，周期上送、变位上送、召唤
  */
 @Component
+@Lazy
 public class YiDaHuaChargeStatusRequest {
 
 
@@ -38,7 +41,6 @@ public class YiDaHuaChargeStatusRequest {
                 //0x02 2号枪
                 ByteUtils.toByte(muzzleNum, 1)[0],
         }, Int_sequence);
-        byteBuf.writeBytes(Status);
-        channel.writeAndFlush(byteBuf);
+        ChannelSendData.Send(Status, channel);
     }
 }

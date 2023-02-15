@@ -1,13 +1,14 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 2023年1月29日19:17:08
@@ -16,17 +17,18 @@ import org.springframework.stereotype.Component;
  * 对应判别代码是 0x92 按需发送 主动请求
  */
 @Component
+@Lazy
 public class YiDaHuaChargeReboot {
+    @Resource
+    SearchSeq seq;
     /**
      * @param context context
-     * @param BCD 电桩BCD编号
      * @param channel channel 需要对应netty的channel通道 channel
-     * @param Int_sequence 序列号位
-     * @param run 执行时间 0x01立即执行 0x02空闲执行 留空默认空闲执行
+     * @param run 执行时间 true立即执行，反之
      */
-    public void Start(YiChargeContext context, byte[] BCD, Channel channel, int Int_sequence, boolean run) {
+    public void Start(YiChargeContext context, Channel channel, boolean run) {
         byte time = (byte) (run ? 0x01:0x02);
-        ByteBuf byteBuf = Unpooled.buffer();
+        byte[] BCD = context.getBCD();
         byte[] reboot = ResData.responseData(context, DaHuaCmdEnum.远程重启, new byte[]{
                 BCD[0],
                 BCD[1],
@@ -41,20 +43,17 @@ public class YiDaHuaChargeReboot {
                 0x02空闲执行
                  */
                 time,
-        },Int_sequence);
-        byteBuf.writeBytes(reboot);
-        channel.writeAndFlush(byteBuf);
+        }, seq.find(context.getStrBCD()));
+        ChannelSendData.Send(reboot, channel);
     }
 
     /**
      *
      * @param context context
-     * @param BCD 电桩BCD编号
      * @param channel channel 需要对应netty的channel通道 channel
-     * @param Int_sequence 序列号位
      */
-    public void Start(YiChargeContext context, byte[] BCD, Channel channel, int Int_sequence) {
-        ByteBuf byteBuf = Unpooled.buffer();
+    public void Start(YiChargeContext context, Channel channel) {
+        byte[] BCD = context.getBCD();
         byte[] reboot = ResData.responseData(context, DaHuaCmdEnum.远程重启, new byte[]{
                 BCD[0],
                 BCD[1],
@@ -69,9 +68,8 @@ public class YiDaHuaChargeReboot {
                 0x01立即执行
                 0x02空闲执行
                  */
-                ByteUtils.toByte(1, 1)[0],
-        },Int_sequence);
-        byteBuf.writeBytes(reboot);
-        channel.writeAndFlush(byteBuf);
+                ByteUtils.toByte(1, 1, false)[0],
+        }, seq.find(context.getStrBCD()));
+        ChannelSendData.Send(reboot, channel);
     }
 }

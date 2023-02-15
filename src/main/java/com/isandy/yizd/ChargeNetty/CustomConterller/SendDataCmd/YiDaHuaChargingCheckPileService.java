@@ -7,6 +7,7 @@ import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
  * 2023年1月11日16:17:56
  */
 @Component
+@Lazy
 public class YiDaHuaChargingCheckPileService {
 
     /**
