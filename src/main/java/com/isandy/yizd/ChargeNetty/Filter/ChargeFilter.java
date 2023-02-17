@@ -60,7 +60,7 @@ public class ChargeFilter {
     @Bean
     private void ChargeFilterinit() {
         try {
-            jedis = new Jedis("10.0.0.1", 6379);
+            jedis = new Jedis(RedisAddress, RedisPort);
         } catch (Exception e) {
             log.info("ChargeFilter初始化失败");
         }
