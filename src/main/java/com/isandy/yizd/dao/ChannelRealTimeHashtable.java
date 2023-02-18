@@ -108,7 +108,7 @@ public class ChannelRealTimeHashtable {
      * @param BCD 需要查询的BCD码
      * @return 返回ChargeMaps对象，分别从对象中获取Sequence和相对应的Channel
      */
-    public ChargeRealMaps chargeMaps(String BCD) {
+    public ChargeRealMaps getChargeMaps(String BCD) {
         if (ch.containsKey(BCD)) {
             cms.setChannel(ch.get(BCD));
             cms.setContext(sy.get(BCD));

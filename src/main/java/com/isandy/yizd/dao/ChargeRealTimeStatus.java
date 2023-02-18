@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 @Component
 @Data
 @NoArgsConstructor
-/**
- * 2023年1月15日16:35:18
- * 充电桩实时信息
- * 返回String明文信息
- * 只限简单的网页使用，不作其他用途
+/*
+  2023年1月15日16:35:18
+  充电桩实时信息
+  返回String明文信息
+  只限简单的网页使用，不作其他用途
  */
 public class ChargeRealTimeStatus {
 

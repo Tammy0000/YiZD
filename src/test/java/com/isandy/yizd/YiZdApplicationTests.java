@@ -1,9 +1,11 @@
 package com.isandy.yizd;
 
+import com.alibaba.fastjson2.JSON;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
+import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,14 +17,12 @@ import java.util.*;
 
 @SpringBootTest
 class YiZdApplicationTests {
-    //98B70E11100314
 
     @Test
     void contextLoads() {
-        double i = 0.6;
-        double v =  i * 1000000;
-        byte[] bytes = ByteUtils.toByte(600000, 4, false);
-        System.out.println(ByteUtils.bytesToHexFun2(bytes));
+        HashMap<String, Boolean> sb = new HashMap<>();
+        sb.put("result", true);
+        System.out.println(JSON.toJSONString(sb));
     }
 
 }

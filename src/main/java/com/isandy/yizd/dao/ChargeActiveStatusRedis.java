@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 
-import javax.annotation.Resource;
-
 /**
  * 解决网页前端查询问题，避免过于频繁向充电桩发送桩状态信息
  * 将0x13状态保存
@@ -73,7 +71,12 @@ public class ChargeActiveStatusRedis {
         jedis.set(name, String.valueOf(json));
     }
 
-    public ChargeRealTimeStatus Get(String name) {
+    /**
+     *
+     * @param name bcd+枪号，例如bcd是1234567，枪号是1号枪。则传入名字是12345671
+     * @return JSON格式
+     */
+    public ChargeRealTimeStatus getRealTimeStatus(String name) {
         return JSON.parseObject(jedis.get(name), ChargeRealTimeStatus.class);
     }
 }

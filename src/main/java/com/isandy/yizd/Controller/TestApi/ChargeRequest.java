@@ -1,10 +1,9 @@
-package com.isandy.yizd.Controller;
+package com.isandy.yizd.Controller.TestApi;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStartChargeService;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStopChargeService;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStatusRequest;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
 import com.isandy.yizd.dao.ChargeActiveStatusRedis;
 import com.isandy.yizd.dao.ChargeRealMaps;
@@ -86,10 +85,9 @@ public class ChargeRequest {
         /*
         --------------------------------------------------
          */
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
         try {
             String s = BCD+muzzle;
-            ChargeRealTimeStatus crts = cars.Get(s);
+            ChargeRealTimeStatus crts = cars.getRealTimeStatus(s);
                 return String.format("""
                                 电桩编号: %s
                                 电桩枪号: %d
@@ -131,7 +129,7 @@ public class ChargeRequest {
         /*
         --------------------------------------------------
          */
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
+        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         int i;
         try {
             i = Integer.parseInt(muzzle);
@@ -164,7 +162,7 @@ public class ChargeRequest {
         /*
         --------------------------------------------------
          */
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
+        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         int i;
         try {
             i = Integer.parseInt(muzzle);
@@ -180,14 +178,14 @@ public class ChargeRequest {
 
     @GetMapping("/reboot/{BCD}")
     String Reboot(@PathVariable("BCD") String BCD) {
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
+        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         yiReboot.Start(chargeMaps.getContext(), chargeMaps.getChannel());
         return "发送重启电桩命令成功";
     }
 
     @GetMapping("/test/{BCD}")
     String Test(@PathVariable("BCD") String BCD) {
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.chargeMaps(BCD);
+        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         yirequest.Start(chargeMaps.getContext(), chargeMaps.getContext().getBCD(),
                 1, chargeMaps.getChannel(), Integer.parseInt(jedis.get(BCD)));
         return "test";
