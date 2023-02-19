@@ -227,9 +227,9 @@ public class YiChargeContext {
             this.BCD = new byte[7];
             int type = ByteUtils.toInt(this.TypeData);
 
-            /**
-             * 按照协议规范消息体是包含BCD编码，但是在消息体内容中有些是前16位是交易信息，而不是BCD
-             * 特作如下处理：
+            /*
+              按照协议规范消息体是包含BCD编码，但是在消息体内容中有些是前16位是交易信息，而不是BCD
+              特作如下处理：
              */
             ArrayList<Integer> ints = new ArrayList<>();
             ints.add(DaHuaCmdEnum.上传实时监测数据.getCmd());

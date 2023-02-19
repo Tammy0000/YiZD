@@ -2,6 +2,15 @@ custom:
   NettyPort: 8768
   RedisAddress: 10.0.0.1
   RedisPort: 6379
+  MongoAddress: 10.0.0.1
+  MongoPort: 27017
+  MongoDataBase: "charge"
 
 server:
   port: 8686
+spring:
+  data:
+    mongodb:
+      host: ${custom.MongoAddress}
+      port: ${custom.MongoPort}
+      database: ${custom.MongoDataBase}

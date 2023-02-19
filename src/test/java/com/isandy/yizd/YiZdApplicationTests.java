@@ -20,9 +20,7 @@ class YiZdApplicationTests {
 
     @Test
     void contextLoads() {
-        HashMap<String, Boolean> sb = new HashMap<>();
-        sb.put("result", true);
-        System.out.println(JSON.toJSONString(sb));
+
     }
 
 }
