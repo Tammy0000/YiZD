@@ -34,9 +34,6 @@ public class ChargeFilter {
     Jedis jedis;
 
     @Resource
-    YiChargeContext context;
-
-    @Resource
     ChannelRealTimeHashtable realTimeHashtable;
 
     @Resource
@@ -67,13 +64,8 @@ public class ChargeFilter {
     }
 
     public void Start(Channel channel, ByteBuf byteBuf) throws ParseException {
+        YiChargeContext context = new YiChargeContext();
         context.init(byteBuf);
-        /*
-        暂时屏蔽
-        移至心跳包位置看测试结果
-        2023年2月14日09:52:39
-         */
-//        realTimeHashtable.add(context.getStrBCD(), channel, context);
         String strBCD = context.getStrBCD();
         context.setChannel(channel);
         byteBuf.resetReaderIndex();
@@ -99,20 +91,6 @@ public class ChargeFilter {
             log.info(CustomTime.time() + "请求计费模型验证请求发送完成");
         } else if (Int_typeData == DaHuaCmdEnum.心跳包Ping.getCmd()) {
             realTimeHashtable.add(context.getStrBCD(), channel, context);
-            //存入redis
-            /*注意，这里的Int_sequence
-                如果属于主动请求的都需要采用心跳包回应的Int_sequence
-                例如0x02登陆认证回应需要0x01登陆请求的Int_sequence
-                所以在代码中要留意
-                如果需要应答，则需要上一个的请求的Int_sequence
-                redis存入的是心跳包Int_sequence
-                如果需要回应则先调用ChannelRealTimeHashtable.chargeMaps()
-                方法添加context再调用chargeMaps实体类中的context.getInt_sequence取出来
-                2023年1月17日11:24:56
-             */
-            /*
-            生成一个"check" + context.getStrBCD()命名的键值对，用来校对通道是否活跃
-             */
             String s = "check" + context.getStrBCD();
             if (jedis.get(s) == null) {
                 jedis.set(s, String.valueOf(context.getInt_sequence()));

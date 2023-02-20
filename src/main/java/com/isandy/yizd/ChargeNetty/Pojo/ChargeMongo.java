@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -19,18 +20,30 @@ public class ChargeMongo implements ChargeImpl {
     MongoTemplate mongo;
 
     @Override
-    public void insert(Charge charge) {
-        mongo.insert(charge);
-    }
-
-    @Override
-    public boolean updateSeq(String BCD, int MuzzleNum, int Seq) {
+    public void insertLogin(Charge charge) {
         Criteria criteria = new Criteria();
-        criteria.and("BCD").is(BCD)
-                .and("MuzzleNum").is(MuzzleNum);
-        Query query = Query.query(criteria);
-        Update seq = Update.update("Seq", Seq);
-        return mongo.updateMulti(query, seq, Charge.class).wasAcknowledged();
+        criteria.and("BCD").is(charge.getBCD());
+        List<Charge> charges = mongo.find(Query.query(criteria), Charge.class);
+        if (charges.isEmpty()) {
+            for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
+                Criteria cr = new Criteria();
+                Update update = new Update();
+                cr.and("BCD").is(charge.getBCD())
+                        .and("MuzzleNum").is(-1);
+                update.set("MuzzleNum", i);
+                mongo.upsert(Query.query(cr), update, Charge.class);
+            }
+        }else {
+            mongo.remove(Query.query(criteria), Charge.class);
+            for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
+                Criteria cr = new Criteria();
+                Update update = new Update();
+                cr.and("BCD").is(charge.getBCD())
+                        .and("MuzzleNum").is(-1);
+                update.set("MuzzleNum", i);
+                mongo.upsert(Query.query(cr), update, Charge.class);
+            }
+        }
     }
 
     @Override
@@ -49,21 +62,6 @@ public class ChargeMongo implements ChargeImpl {
         .set("BatteryHighTemp", charge.getBatteryHighTemp())
         .set("SumMuzzle", charge.getSumMuzzle());
         return mongo.updateMulti(query, update, Charge.class).wasAcknowledged();
-    }
-
-    @Override
-    public int findSeq(String BCD, int MuzzleNum) {
-        Criteria criteria = new Criteria();
-        criteria.and("BCD").is(BCD)
-                .and("MuzzleNum").is(MuzzleNum);
-        Query query = Query.query(criteria);
-        Charge one = mongo.findOne(query, Charge.class);
-        try {
-            assert one != null;
-            return one.getSeq();
-        } catch (Exception e) {
-            return -1;
-        }
     }
 
     @Override

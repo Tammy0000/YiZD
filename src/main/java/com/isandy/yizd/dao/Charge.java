@@ -32,4 +32,5 @@ public class Charge {
     double SumCharge; //充电度数
     int LeftTime; //充电剩余时间
     int BatteryHighTemp; //电池组最高温度
+    String LoginTime;
 }

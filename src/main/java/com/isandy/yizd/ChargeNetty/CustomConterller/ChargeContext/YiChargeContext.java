@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 
-@Component
 @Getter
 @Setter
 @Slf4j
