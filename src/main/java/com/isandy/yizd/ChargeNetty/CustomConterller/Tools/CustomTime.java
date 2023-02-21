@@ -13,4 +13,10 @@ public class CustomTime {
         SimpleDateFormat simple = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return simple.format(date);
     }
+
+    public static String Paytime() {
+        Date date = new Date();
+        SimpleDateFormat simple = new SimpleDateFormat("yyMMddHHmmss");
+        return simple.format(date);
+    }
 }

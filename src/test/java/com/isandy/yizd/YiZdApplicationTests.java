@@ -1,6 +1,7 @@
 package com.isandy.yizd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
 import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import com.isandy.yizd.dao.Charge;
@@ -13,6 +14,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @SpringBootTest
 class YiZdApplicationTests {
     @Autowired
@@ -21,9 +25,8 @@ class YiZdApplicationTests {
     MongoTemplate mongoTemplate;
     @Test
     void contextLoads() {
-        byte[] bytes = new byte[1];
-        bytes[0] = 0x01;
-        System.out.println(ByteUtils.toInt(bytes));
+        byte[] bytes = ByteUtils.toByte(100000, 4, false);
+        System.out.println(ByteUtils.bytesToHexFun2(bytes));
     }
 
 }
