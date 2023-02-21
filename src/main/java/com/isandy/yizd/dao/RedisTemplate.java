@@ -36,4 +36,15 @@ public class RedisTemplate implements RedisImpl{
         String s = jedis.get(BCD);
         return Integer.parseInt(s);
     }
+
+    @Override
+    public void setPublicSeq(String BCD, int Seq) {
+        jedis.set(BCD, String.valueOf(Seq));
+    }
+
+    @Override
+    public int getPublicSeq(String BCD) {
+        String s = jedis.get(BCD);
+        return Integer.parseInt(s);
+    }
 }

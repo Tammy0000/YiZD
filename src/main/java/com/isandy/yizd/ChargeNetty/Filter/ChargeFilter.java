@@ -102,7 +102,7 @@ public class ChargeFilter {
         } else if (Int_typeData == DaHuaCmdEnum.上传实时监测数据.getCmd()) {
             log.info("实时检测数据BCD：" + ByteUtils.bytesToHexFun2(context.getBCD()));
             log.info("实时检测数据插枪状态：" + context.getMuzzleLink());
-            log.info("实时检测数据枪状态：" + context.getMuzzleStatus());
+            log.info("实时检测数据枪状态：" + context.getMuzzleWork());
             activeStatusRedis.Set(context);
         } else if (Int_typeData == DaHuaCmdEnum.远程启机命令回复.getCmd()) {
             int b = ByteUtils.toInt(context.getMessage_body()[24]);

@@ -3,6 +3,7 @@ package com.isandy.yizd.ChargeNetty.Pojo;
 import com.isandy.yizd.dao.Charge;
 import com.isandy.yizd.dao.ChargeImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,26 +24,16 @@ public class ChargeMongo implements ChargeImpl {
     public void insertLogin(Charge charge) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(charge.getBCD());
-        List<Charge> charges = mongo.find(Query.query(criteria), Charge.class);
-        if (charges.isEmpty()) {
-            for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-                Criteria cr = new Criteria();
-                Update update = new Update();
-                cr.and("BCD").is(charge.getBCD())
-                        .and("MuzzleNum").is(-1);
-                update.set("MuzzleNum", i);
-                mongo.upsert(Query.query(cr), update, Charge.class);
-            }
-        }else {
-            mongo.remove(Query.query(criteria), Charge.class);
-            for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-                Criteria cr = new Criteria();
-                Update update = new Update();
-                cr.and("BCD").is(charge.getBCD())
-                        .and("MuzzleNum").is(-1);
-                update.set("MuzzleNum", i);
-                mongo.upsert(Query.query(cr), update, Charge.class);
-            }
+        mongo.remove(Query.query(criteria), Charge.class);
+        for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
+            Charge c = new Charge();
+            /*
+            必须要浅拷贝，
+            直接赋值会报错
+             */
+            BeanUtils.copyProperties(charge, c);
+            c.setMuzzleNum(i);
+            mongo.insert(c);
         }
     }
 
@@ -53,15 +44,16 @@ public class ChargeMongo implements ChargeImpl {
                 .and("MuzzleNum").is(MuzzleNum);
         Query query = Query.query(criteria);
         Update update = new Update();
-        update.set("MuzzleEC", charge.getMuzzleEC())
+        update
+        .set("MuzzleLink", charge.getMuzzleLink())
+        .set("MuzzleEC", charge.getMuzzleEC())
         .set("MuzzleStatus", charge.getMuzzleStatus())
         .set("MuzzleVolt", charge.getMuzzleVolt())
         .set("LeftTime", charge.getLeftTime())
         .set("SumCharge", charge.getSumCharge())
         .set("ChargeAddTime", charge.getChargeAddTime())
-        .set("BatteryHighTemp", charge.getBatteryHighTemp())
-        .set("SumMuzzle", charge.getSumMuzzle());
-        return mongo.updateMulti(query, update, Charge.class).wasAcknowledged();
+        .set("BatteryHighTemp", charge.getBatteryHighTemp());
+        return mongo.upsert(query, update, Charge.class).wasAcknowledged();
     }
 
     @Override

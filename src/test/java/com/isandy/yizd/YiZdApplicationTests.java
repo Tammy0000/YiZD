@@ -1,9 +1,11 @@
 package com.isandy.yizd;
 
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
 import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import com.isandy.yizd.dao.Charge;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -19,15 +21,9 @@ class YiZdApplicationTests {
     MongoTemplate mongoTemplate;
     @Test
     void contextLoads() {
-        Charge charge = new Charge();
-        charge.setBCD("123456789");
-        charge.setSumMuzzle(2);
-        charge.setMuzzleVolt(387);
-        charge.setMuzzleEC(65.2);
-        charge.setMuzzleNum(1);
-        Update update = new Update();
-        Criteria criteria = new Criteria();
-        chargeMongo.insertLogin(charge);
+        byte[] bytes = new byte[1];
+        bytes[0] = 0x01;
+        System.out.println(ByteUtils.toInt(bytes));
     }
 
 }

@@ -12,16 +12,16 @@ public class Charge {
     @MongoId
     String id;
     String BCD;
-    int Seq;
+    int Seq; //校验域(对应每支充电枪)
     int MuzzleNum; //枪号
                     /*
-                      枪状态
+                      枪状态(周期上传)
                       0x00 离线
                       0x01 故障
                       0x02 空闲
                       0x03 充电
                      */
-    String MuzzleStatus; //充电枪状态
+    String MuzzleWork; //充电枪状态
     double MuzzleVolt; //充电枪输出电压
     double MuzzleEC; //充电枪输出电流
     int SumMuzzle; //充电枪数量
@@ -33,4 +33,11 @@ public class Charge {
     int LeftTime; //充电剩余时间
     int BatteryHighTemp; //电池组最高温度
     String LoginTime;
+    int PublicSeq; //公共校验域
+    int Encryption; //加密标志
+    String ChargeSeries; //电桩类型
+    String Network; // 网络类型
+    String SIMCard; //运营商
+    String MuzzleStatus; //枪状态（心跳包）
+    double Consume; //消费金额
 }

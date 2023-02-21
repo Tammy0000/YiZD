@@ -2,7 +2,6 @@ package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -38,7 +37,7 @@ public class YiDaHuaHeartbeatPileService {
                 ByteUtils.toByte(0, 1)[0],
         }, seq.find(context.getStrBCD()));
         context.setMuzzleNum(ByteUtils.toInt(data[7]));
-        context.setMuzzleStatus(ByteUtils.toInt(data[8]));
+        context.setMuzzleWork(ByteUtils.toInt(data[8]));
         ChannelSendData.Send(PONG, channel);
     }
 }

@@ -37,7 +37,7 @@ public class ChargeActiveStatusRedis {
     public void Set(YiChargeContext context) {
         JSONObject json = new JSONObject();
         json.put("muzzleNum", context.getMuzzleNum());
-        int muzzleStatus = context.getMuzzleStatus();
+        int muzzleStatus = context.getMuzzleWork();
         /*
           枪状态
           0x00 离线
