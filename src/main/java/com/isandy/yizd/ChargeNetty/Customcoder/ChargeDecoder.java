@@ -89,6 +89,30 @@ public class ChargeDecoder extends ByteToMessageDecoder {
                 byteBuf.writeBytes(bytes);
                 list.add(byteBuf);
             }
+        }else if (num == 80) {
+            if(!channels.containsKey(ctx.channel().toString())) {
+                byte[] b80 = new byte[80];
+                for (int i = 0; i < num; i++) {
+                    b80[i] = byteBuf.readByte();
+                }
+                log.info("----");
+                channels.put(ctx.channel().toString(), b80);
+            }
+        } else if (num == 86) {
+            if (channels.containsKey(ctx.channel().toString())) {
+                byte[] b86 = new byte[86];
+                byte[] source = new byte[166];
+                for (int i = 0; i < 86; i++) {
+                    b86[i] = byteBuf.readByte();
+                }
+                byte[] b80s = channels.get(ctx.channel().toString());
+                System.arraycopy(b80s, 0, source, 0, b80s.length);
+                System.arraycopy(b86, 0, source, 80, b86.length);
+                byteBuf.clear();
+                byteBuf.writeBytes(source);
+                list.add(byteBuf);
+                channels.remove(ctx.channel().toString());
+            }
         }
         else {
             list.add(byteBuf);
