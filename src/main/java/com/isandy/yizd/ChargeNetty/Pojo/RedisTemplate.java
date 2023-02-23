@@ -1,4 +1,4 @@
-package com.isandy.yizd.dao;
+package com.isandy.yizd.ChargeNetty.Pojo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

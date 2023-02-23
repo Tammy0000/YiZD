@@ -1,7 +1,5 @@
 package com.isandy.yizd.ChargeNetty.Pojo;
 
-import com.isandy.yizd.dao.Charge;
-import com.isandy.yizd.dao.ChargeImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,20 +9,17 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.List;
-
 @Component
 @Slf4j
 public class ChargeMongo implements ChargeImpl {
     @Autowired
-    MongoTemplate mongo;
+    MongoTemplate mongoTemplate;
 
     @Override
     public void insertLogin(Charge charge) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(charge.getBCD());
-        mongo.remove(Query.query(criteria), Charge.class);
+        mongoTemplate.remove(Query.query(criteria), Charge.class);
         for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
             Charge c = new Charge();
             /*
@@ -33,7 +28,7 @@ public class ChargeMongo implements ChargeImpl {
              */
             BeanUtils.copyProperties(charge, c);
             c.setMuzzleNum(i);
-            mongo.insert(c);
+            mongoTemplate.insert(c);
         }
     }
 
@@ -53,7 +48,7 @@ public class ChargeMongo implements ChargeImpl {
         .set("SumCharge", charge.getSumCharge())
         .set("ChargeAddTime", charge.getChargeAddTime())
         .set("BatteryHighTemp", charge.getBatteryHighTemp());
-        return mongo.upsert(query, update, Charge.class).wasAcknowledged();
+        return mongoTemplate.upsert(query, update, Charge.class).wasAcknowledged();
     }
 
     @Override
@@ -62,7 +57,7 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
         Query query = Query.query(criteria);
-        return mongo.findOne(query, Charge.class);
+        return mongoTemplate.findOne(query, Charge.class);
     }
 
     @Override
@@ -70,7 +65,7 @@ public class ChargeMongo implements ChargeImpl {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
-        return mongo.remove(Query.query(criteria), Charge.class).wasAcknowledged();
+        return mongoTemplate.remove(Query.query(criteria), Charge.class).wasAcknowledged();
     }
 
     @Override
@@ -79,12 +74,27 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("SumMuzzle").is(sumMuzzle);
         Query query = Query.query(criteria);
-        Charge one = mongo.findOne(query, Charge.class);
+        Charge one = mongoTemplate.findOne(query, Charge.class);
         if (one == null) {
             Charge charge = new Charge();
             charge.setSumMuzzle(sumMuzzle);
             charge.setBCD(BCD);
-            mongo.insert(charge);
+            mongoTemplate.insert(charge);
+        }
+    }
+
+    @Override
+    public int findSeq(String BCD, int muzzleNum) {
+        Criteria criteria = new Criteria();
+        criteria.and("BCD").is(BCD)
+                .and("muzzleNum").is(muzzleNum);
+        try {
+            Charge one = mongoTemplate.findOne(Query.query(criteria), Charge.class);
+            assert one != null;
+            return one.getSeq();
+        } catch (Exception e) {
+            log.error("提取Seq失败,电桩不存在");
+            return -1;
         }
     }
 }

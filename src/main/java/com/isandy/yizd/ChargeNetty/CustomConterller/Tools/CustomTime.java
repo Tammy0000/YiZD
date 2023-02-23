@@ -19,4 +19,9 @@ public class CustomTime {
         SimpleDateFormat simple = new SimpleDateFormat("yyMMddHHmmss");
         return simple.format(date);
     }
+
+    public static String toTime(Date date) {
+        SimpleDateFormat simple = new SimpleDateFormat("yyMMddHHmmss");
+        return simple.format(date);
+    }
 }

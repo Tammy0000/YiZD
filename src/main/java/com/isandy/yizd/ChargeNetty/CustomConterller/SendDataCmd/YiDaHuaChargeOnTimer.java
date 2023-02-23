@@ -1,13 +1,12 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Component
@@ -15,9 +14,7 @@ import java.util.Date;
 public class YiDaHuaChargeOnTimer {
     public void Start(YiChargeContext context, Channel channel) throws ParseException {
         byte[] Data = context.getBCD();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date parse = sdf.parse(CustomTime.time());
-        byte[] times = Cp56Time2a.toBytes(parse);
+        byte[] times = Cp56Time2a.toBytes(new Date());
         byte[] timer = ResData.responseData(context, DaHuaCmdEnum.对时设置应答, new byte[]{
                 Data[0],
                 Data[1],

@@ -1,13 +1,9 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 2023年1月16日21:48:37
@@ -17,8 +13,6 @@ import javax.annotation.Resource;
  */
 @Component
 public class YiChargeCustomerStopChargeService {
-    @Resource
-    SearchSeq seq;
 
     /**
      *
@@ -40,7 +34,7 @@ public class YiChargeCustomerStopChargeService {
                   停止枪号
                 */
                 ByteUtils.toByte(muzzleNum, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 }

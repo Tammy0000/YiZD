@@ -1,4 +1,4 @@
-package com.isandy.yizd.dao;
+package com.isandy.yizd.ChargeNetty.Pojo;
 
 public interface RedisImpl {
     public void setSeq(String BCD, int Seq);

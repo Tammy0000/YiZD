@@ -1,11 +1,9 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 登陆应答对应的判别类型是0x01
@@ -13,8 +11,6 @@ import javax.annotation.Resource;
  */
 @Component
 public class YiDaHuaLoginRequest {
-    @Resource
-    SearchSeq seq;
     /**
      * 处理电桩初识登陆认证信息
      * @param code true 允许登陆，反之
@@ -32,7 +28,7 @@ public class YiDaHuaLoginRequest {
                 data[5],
                 data[6],
                 logs,
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(resbyte, channel);
     }
 
@@ -50,7 +46,7 @@ public class YiDaHuaLoginRequest {
                 data[5],
                 data[6],
                 ByteUtils.toByte(0x00, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(resbyte, channel);
     }
 }

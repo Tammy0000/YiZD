@@ -1,19 +1,15 @@
 package com.isandy.yizd.ChargeNetty.Filter;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.*;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.dao.ChannelRealTimeHashtable;
-import com.isandy.yizd.dao.ChargeActiveStatusRedis;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
 import java.text.ParseException;
@@ -24,23 +20,14 @@ import java.text.ParseException;
 @Component
 @Slf4j
 public class ChargeFilter {
-
-    @Value("${custom.RedisAddress}")
-    String RedisAddress;
-
-    @Value("${custom.RedisPort}")
-    int RedisPort;
-
-    Jedis jedis;
+    @Resource
+    YiChargeContext context;
 
     @Resource
-    ChannelRealTimeHashtable realTimeHashtable;
+    YiChargeChannel chargeChannel;
 
     @Resource
     YiDaHuaChargingCheckPileService checkPileService;
-
-    @Resource
-    ChargeActiveStatusRedis activeStatusRedis;
 
     @Resource
     YiDaHuaLoginRequest loginRequest;
@@ -54,17 +41,7 @@ public class ChargeFilter {
     @Resource
     YiDaHuaHeartbeatPileService pileService;
 
-    @Bean
-    private void ChargeFilterinit() {
-        try {
-            jedis = new Jedis(RedisAddress, RedisPort);
-        } catch (Exception e) {
-            log.info("ChargeFilter初始化失败");
-        }
-    }
-
     public void Start(Channel channel, ByteBuf byteBuf) throws ParseException {
-        YiChargeContext context = new YiChargeContext();
         context.init(byteBuf);
         String strBCD = context.getStrBCD();
         context.setChannel(channel);
@@ -79,7 +56,7 @@ public class ChargeFilter {
         } catch (Exception e) {
             log.info("初始化报文数据类型失败,发送过来的内容有问题...");
         }
-        log.info("报文类型是："+Int_typeData);
+        log.info("报文类型是："+ByteUtils.bytesToHexFun2(typeData));
         //开始判别类型做出回应
         if (Int_typeData == DaHuaCmdEnum.登陆.getCmd()) {
             log.info(CustomTime.time() + "开始请求登陆认证");
@@ -90,12 +67,7 @@ public class ChargeFilter {
             checkPileService.Start(context, channel);
             log.info(CustomTime.time() + "请求计费模型验证请求发送完成");
         } else if (Int_typeData == DaHuaCmdEnum.心跳包Ping.getCmd()) {
-            realTimeHashtable.add(context.getStrBCD(), channel, context);
-            String s = "check" + context.getStrBCD();
-            if (jedis.get(s) == null) {
-                jedis.set(s, String.valueOf(context.getInt_sequence()));
-            }
-            jedis.set(strBCD, String.valueOf(context.getInt_sequence()));
+            chargeChannel.add(context.getStrBCD(), channel);
             pileService.Start(context, channel);
             log.info(CustomTime.time() +
                     "心跳包发送完成");
@@ -103,7 +75,6 @@ public class ChargeFilter {
             log.info("实时检测数据BCD：" + ByteUtils.bytesToHexFun2(context.getBCD()));
             log.info("实时检测数据插枪状态：" + context.getMuzzleLink());
             log.info("实时检测数据枪状态：" + context.getMuzzleWork());
-            activeStatusRedis.Set(context);
         } else if (Int_typeData == DaHuaCmdEnum.远程启机命令回复.getCmd()) {
             int b = ByteUtils.toInt(context.getMessage_body()[24]);
             String s = b > 0 ? "成功" : "失败";

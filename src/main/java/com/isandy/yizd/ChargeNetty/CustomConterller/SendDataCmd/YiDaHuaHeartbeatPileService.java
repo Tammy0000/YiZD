@@ -1,7 +1,8 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -16,12 +17,13 @@ import javax.annotation.Resource;
 @Lazy
 public class YiDaHuaHeartbeatPileService {
     @Resource
-    SearchSeq seq;
+    ChargeMongo chargeMongo;
 
     //Start代表的是回应发送
     public void Start(YiChargeContext context, Channel channel) {
         byte[] data = context.getMessage_body();
-        byte[] PONG = ResData.responseData(context, DaHuaCmdEnum.心跳包Pong, new byte[]{
+        int seq = chargeMongo.findSeq(context.getStrBCD(), context.getMuzzleNum());
+        byte[] PONG = ResData.responseData(DaHuaCmdEnum.心跳包Pong, new byte[]{
                 //BCD编码
                 data[0],
                 data[1],
@@ -35,9 +37,7 @@ public class YiDaHuaHeartbeatPileService {
                 //0x00 心跳应答
                 data[8],
                 ByteUtils.toByte(0, 1)[0],
-        }, seq.find(context.getStrBCD()));
-        context.setMuzzleNum(ByteUtils.toInt(data[7]));
-        context.setMuzzleWork(ByteUtils.toInt(data[8]));
+        }, seq);
         ChannelSendData.Send(PONG, channel);
     }
 }

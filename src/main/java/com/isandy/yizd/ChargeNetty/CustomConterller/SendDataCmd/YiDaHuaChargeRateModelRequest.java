@@ -1,18 +1,14 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-
 @Component
 @Lazy
 public class YiDaHuaChargeRateModelRequest {
-    @Resource
-    SearchSeq seq;
 
     /**
      * 充电桩计费模型请求
@@ -57,7 +53,7 @@ public class YiDaHuaChargeRateModelRequest {
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 }

@@ -1,14 +1,10 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 2023年1月29日19:17:08
@@ -19,8 +15,7 @@ import javax.annotation.Resource;
 @Component
 @Lazy
 public class YiDaHuaChargeReboot {
-    @Resource
-    SearchSeq seq;
+
     /**
      * @param context context
      * @param channel channel 需要对应netty的channel通道 channel
@@ -43,7 +38,7 @@ public class YiDaHuaChargeReboot {
                 0x02空闲执行
                  */
                 time,
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(reboot, channel);
     }
 
@@ -69,7 +64,7 @@ public class YiDaHuaChargeReboot {
                 0x02空闲执行
                  */
                 ByteUtils.toByte(1, 1, false)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(reboot, channel);
     }
 }

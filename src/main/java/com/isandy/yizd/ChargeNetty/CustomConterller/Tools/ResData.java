@@ -1,7 +1,7 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.Tools;
 
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 
 public class ResData {
     public static byte[] responseData(YiChargeContext context, DaHuaCmdEnum cmdEnum, byte[] data, int sequence){

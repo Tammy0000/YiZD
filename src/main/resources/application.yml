@@ -1,8 +1,8 @@
 custom:
   NettyPort: 8768
-  RedisAddress: 10.0.0.6
+  RedisAddress: 10.0.0.1
   RedisPort: 6379
-  MongoAddress: 10.0.0.6
+  MongoAddress: 10.0.0.1
   MongoPort: 27017
   MongoDataBase: "Charge"
 

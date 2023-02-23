@@ -1,29 +1,36 @@
-package com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext;
+package com.isandy.yizd.ChargeNetty.ChargeContext;
 
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.dao.Charge;
+import com.isandy.yizd.ChargeNetty.Pojo.Charge;
 import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
-@Getter
-@Setter
+@Data
 @Slf4j
+@Component
+@Scope("prototype")
 public class YiChargeContext {
     @Resource
-    MongoTemplate mongo;
+    MongoTemplate mongos;
 
     @Resource
     ChargeRealTimeStatus crts;
@@ -203,6 +210,58 @@ public class YiChargeContext {
      */
     int MuzzleError;
 
+    /**
+     * 电表起始值
+     * 精确到小数点后四位
+     */
+    double StartEleMeter;
+
+    /**
+     * 电表结束值
+     * 精确到小数点后四位
+     */
+    double EndEleMeter;
+
+    /**
+     * 总电量
+     * 精确到小数点后四位
+     */
+    double SumEle;
+
+    /**
+     * 消费金额
+     * 精确到小数点后四位
+     */
+    double Pay;
+
+    /**
+     * 启动充电枪方式
+     * 0x01：app启动
+     * 0x02：卡启动
+     * 0x04：离线卡启动
+     * 0x05: vin 码启动充电
+     */
+    String StartMethod;
+
+    /**
+     * 交易日期
+     */
+    Date PayTime;
+
+    /**
+     * 充电枪启动时间
+     */
+    Date StartTime;
+
+    /**
+     * 充电枪结束时间
+     */
+    Date EndTime;
+
+    /**
+     * 物理卡号
+     */
+    String PhyCard;
 
 
     public void init(ByteBuf byteBuf) {
@@ -309,6 +368,9 @@ public class YiChargeContext {
             String sb = ByteUtils.bytesToHexFun2(this.BCD);
             //去除多余空格
             this.StrBCD = sb.replace(" ", "");
+        } catch (Exception e) {
+            log.error("报文初始化排序失败");
+        }
 
             /*
               处理0x13充电桩状态码
@@ -325,102 +387,113 @@ public class YiChargeContext {
               电池组最高温度
              */
 
-            try {
                 /*
                    0x33 远程启动充电命令回复
                    写着感觉又长又臭了
                    2023年1月16日22:10:26
                  */
-                if (DaHuaCmdEnum.远程启机命令回复.getCmd() == ByteUtils.toInt(this.TypeData)) {
-                    this.PayData = new byte[16];
-                    System.arraycopy(this.message_body, 0, this.PayData, 0, 16);
-                    byte[] muzzle = new byte[1];
-                    muzzle[0] = this.message_body[23];
-                    this.MuzzleNum = ByteUtils.toInt(muzzle);
-                    byte[] sms = new byte[1];
-                    sms[0] = this.message_body[24];
-                    this.StartMuzzleResult = ByteUtils.toInt(sms);
-                    byte[] error = new byte[1];
-                    error[0] = this.message_body[25];
-                    this.MuzzleError = ByteUtils.toInt(error);
-                }
-            } catch (Exception e) {
-                log.info("0x33 远程启动充电初始化失败");
+        try {
+            if (DaHuaCmdEnum.远程启机命令回复.getCmd() == ByteUtils.toInt(this.TypeData)) {
+                this.PayData = new byte[16];
+                System.arraycopy(this.message_body, 0, this.PayData, 0, 16);
+                byte[] muzzle = new byte[1];
+                muzzle[0] = this.message_body[23];
+                this.MuzzleNum = ByteUtils.toInt(muzzle);
+                byte[] sms = new byte[1];
+                sms[0] = this.message_body[24];
+                this.StartMuzzleResult = ByteUtils.toInt(sms);
+                byte[] error = new byte[1];
+                error[0] = this.message_body[25];
+                this.MuzzleError = ByteUtils.toInt(error);
             }
+        } catch (Exception e) {
+            log.error("0x33 远程启动充电初始化失败");
+        }
 
+
+        try {
             if (DaHuaCmdEnum.登陆.getCmd() == ByteUtils.toInt(this.TypeData)) {
-                byte[] chargeseries = new byte[1];
-                chargeseries[0] = this.message_body[7];
-                this.ChargeSeries = ByteUtils.toInt(chargeseries, false) > 0 ? "交流桩":"直流桩";
-                byte[] net = new byte[1];
-                net[0] = this.message_body[18];
-                int n = ByteUtils.toInt(net, false);
-                if (n == 0) {
-                    this.Network = "SIM";
-                } else if (n == 1) {
-                    this.Network = "LAN";
-                } else if (n == 2) {
-                    this.Network = "WAN";
-                }else {
-                    this.Network = "Other";
+                    byte[] chargeseries = new byte[1];
+                    chargeseries[0] = this.message_body[7];
+                    this.ChargeSeries = ByteUtils.toInt(chargeseries, false) > 0 ? "交流桩":"直流桩";
+                    byte[] net = new byte[1];
+                    net[0] = this.message_body[18];
+                    int n = ByteUtils.toInt(net, false);
+                    if (n == 0) {
+                        this.Network = "SIM";
+                    } else if (n == 1) {
+                        this.Network = "LAN";
+                    } else if (n == 2) {
+                        this.Network = "WAN";
+                    }else {
+                        this.Network = "Other";
+                    }
+                    byte[] sim = new byte[1];
+                    sim[0] = this.message_body[29];
+                    int s = ByteUtils.toInt(sim, false);
+                    if (s == 0) {
+                        this.SIMCard = "移动";
+                    } else if (s == 2) {
+                        this.SIMCard = "电信";
+                    } else if (s == 3) {
+                        this.SIMCard = "联通";
+                    }else {
+                        this.SIMCard = "Other";
+                    }
+                    byte[] num = new byte[1];
+                    num[0] = this.message_body[8];
+                    this.SumMuzzle = ByteUtils.toInt(num, false);
+                    this.PublicSeq = this.int_sequence;
+                    charge.setBCD(this.StrBCD)
+                            .setChargeSeries(this.ChargeSeries)
+                            .setNetwork(this.Network)
+                            .setSIMCard(this.SIMCard)
+                            .setBCD(this.StrBCD)
+                            .setPublicSeq(this.PublicSeq)
+                            .setEncryption(ByteUtils.toInt(this.encryption))
+                            .setSumMuzzle(this.SumMuzzle);
+                    Criteria criteria = new Criteria();
+                    criteria.and("BCD").is(charge.getBCD());
+                    mongos.remove(Query.query(criteria), Charge.class);
+                    for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
+                        Charge c = new Charge();
+                        /*
+                        必须要浅拷贝，
+                        直接赋值会报错
+                        */
+                        BeanUtils.copyProperties(charge, c);
+                        c.setMuzzleNum(i);
+                        mongos.insert(c);
+                        log.info("添加了"+i + "次");
+                    }
                 }
-                byte[] sim = new byte[1];
-                sim[0] = this.message_body[29];
-                int s = ByteUtils.toInt(sim, false);
-                if (s == 0) {
-                    this.SIMCard = "移动";
-                } else if (s == 2) {
-                    this.SIMCard = "电信";
-                } else if (s == 3) {
-                    this.SIMCard = "联通";
-                }else {
-                    this.SIMCard = "Other";
-                }
-                byte[] num = new byte[1];
-                num[0] = this.message_body[8];
-                this.SumMuzzle = ByteUtils.toInt(num, false);
-                this.PublicSeq = this.int_sequence;
-                charge.setBCD(this.StrBCD)
-                        .setChargeSeries(this.ChargeSeries)
-                        .setNetwork(this.Network)
-                        .setSIMCard(this.SIMCard)
-                        .setBCD(this.StrBCD)
-                        .setPublicSeq(this.int_sequence)
-                        .setEncryption(this.int_sequence)
-                        .setSumMuzzle(this.SumMuzzle);
-                Criteria criteria = new Criteria();
-                criteria.and("BCD").is(charge.getBCD());
-                mongo.remove(Query.query(criteria), Charge.class);
-                for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-                    Charge c = new Charge();
-                    /*
-                    必须要浅拷贝，
-                    直接赋值会报错
-                    */
-                    BeanUtils.copyProperties(charge, c);
-                    c.setMuzzleNum(i);
-                    mongo.insert(c);
-                }
-            }
+        } catch (BeansException e) {
+            log.error("0x01登陆初始化失败");
+        }
 
+        try {
             if (DaHuaCmdEnum.心跳包Ping.getCmd() == ByteUtils.toInt(this.TypeData)) {
-                byte[] muzzlenum = new byte[1];
-                muzzlenum[0] = this.message_body[7];
-                byte[] muzzlestatus = new byte[1];
-                muzzlestatus[0] = this.message_body[8];
-                int mu = ByteUtils.toInt(muzzlestatus, false);
-                String muzzle = mu > 0 ? "故障":"正常";
-                int num = ByteUtils.toInt(muzzlenum);
-                Criteria criteria = new Criteria();
-                criteria.and("BCD").is(this.StrBCD)
-                        .and("MuzzleNum").is(num);
-                Update update = new Update();
-                update.set("Seq", this.int_sequence)
-                        .set("MuzzleStatus", muzzle);
-                mongo.upsert(Query.query(criteria), update, Charge.class);
-            }
+                    byte[] muzzlenum = new byte[1];
+                    muzzlenum[0] = this.message_body[7];
+                    this.MuzzleNum = ByteUtils.toInt(muzzlenum);
+                    byte[] muzzlestatus = new byte[1];
+                    muzzlestatus[0] = this.message_body[8];
+                    int mu = ByteUtils.toInt(muzzlestatus, false);
+                    String muzzle = mu > 0 ? "故障":"正常";
+                    int num = ByteUtils.toInt(muzzlenum);
+                    Criteria criteria = new Criteria();
+                    criteria.and("BCD").is(this.StrBCD)
+                            .and("muzzleNum").is(num);
+                    Update update = new Update();
+                    update.set("seq", this.int_sequence)
+                            .set("MuzzleStatus", muzzle);
+                    mongos.upsert(Query.query(criteria), update, Charge.class);
+                }
+        } catch (Exception e) {
+            log.error("0x03心跳包初始化失败");
+        }
 
-            try {
+        try {
                 /*
                   0x3b交易记录，感觉自己越写越长了。先不管了，让代码跑起来先
                   找个时间再优化
@@ -428,10 +501,52 @@ public class YiChargeContext {
                  */
                 if (DaHuaCmdEnum.交易记录.getCmd() == ByteUtils.toInt(this.TypeData)) {
                     this.PayData = new byte[16];
+                    log.info("长度是"+this.message_body.length);
                     System.arraycopy(this.message_body, 0, this.PayData, 0, 16);
+                    byte[] muzzlenum = new byte[1];
+                    muzzlenum[0] = this.message_body[23];
+                    this.MuzzleNum = ByteUtils.toInt(muzzlenum);
+                    byte[] start = new byte[7];
+                    byte[] end = new byte[7];
+                    System.arraycopy(this.message_body, 24, start, 0, 7);
+                    System.arraycopy(this.message_body, 31, end, 0, 7);
+                    this.StartTime = Cp56Time2a.toDate(start);
+                    this.EndTime = Cp56Time2a.toDate(end);
+                    byte[] sum = new byte[4];
+                    System.arraycopy(this.message_body, 112, sum, 0, 4);
+                    this.SumEle = (double) ByteUtils.toInt(sum, false) / 10000;
+                    log.info("充电量是:"+this.SumEle);
+                    byte[] pay = new byte[4];
+                    System.arraycopy(this.message_body, 120, pay, 0, 4);
+                    this.Pay = (double) ByteUtils.toInt(pay, false) / 10000;
+                    log.info("消费金额是:"+this.Pay);
+                    byte[] only = new byte[1];
+                    only[0] = this.message_body[141];
+                    int i = ByteUtils.toInt(only, false);
+                    String s;
+                    if (i == 1) {
+                        s = "app启动";
+                    } else if (i == 2) {
+                        s = "卡启动";
+                    } else if (i == 4) {
+                        s = "离线卡启动";
+                    } else if (i == 5) {
+                        s = "vin码启动充电";
+                    }else {
+                        s = "Other";
+                    }
+                    this.StartMethod = s;
+                    log.info("充电枪启动方式是:"+this.StartMethod);
+                    byte[] paytime = new byte[7];
+                    System.arraycopy(this.message_body, 142, paytime, 0, 7);
+                    this.PayTime = Cp56Time2a.toDate(paytime);
+                    log.info("账单交易时间是:"+this.PayTime);
+                    byte[] phycard = new byte[8];
+                    System.arraycopy(this.message_body, 150, phycard, 0, 8);
+                    this.PhyCard = ByteUtils.bytesToHexFun2(phycard);
                 }
             } catch (Exception e) {
-                log.info("0x3b交易记录初始化失败");
+                log.error("0x3b交易记录初始化失败");
             }
 
             try {
@@ -507,17 +622,14 @@ public class YiChargeContext {
                     consume[3] = this.message_body[57];
                     this.Consume = (double) ByteUtils.toInt(consume, false) / 10000;
                     update.set("Consume", this.Consume);
-                    update.set("Seq", this.int_sequence);
+                    update.set("seq", this.int_sequence);
                     Criteria criteria = new Criteria();
                     criteria.and("BCD").is(this.getStrBCD())
-                            .and("MuzzleNum").is(this.getMuzzleNum());
-                    mongo.upsert(Query.query(criteria), update, Charge.class);
+                            .and("muzzleNum").is(this.getMuzzleNum());
+                    mongos.upsert(Query.query(criteria), update, Charge.class);
                 }
             } catch (Exception e) {
-                log.info("0x13桩实时状态初始化失败");
+                log.error("0x13桩实时状态初始化失败");
             }
-        } catch (Exception e) {
-            log.info("传入报文格式不正确");
-        }
     }
 }

@@ -1,14 +1,10 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 交易记录确认 对应的识别代码是0x40, 属应答回复
@@ -17,8 +13,7 @@ import javax.annotation.Resource;
 @Component
 @Lazy
 public class YiDaHuaPayResponse {
-    @Resource
-    SearchSeq seq;
+
     /**
      * 默认正常账单
      * @param context context
@@ -52,7 +47,7 @@ public class YiDaHuaPayResponse {
                   确认结果 0x00 上传成功 0x01 非法账单
                 */
                 ByteUtils.toByte(0, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 
@@ -86,7 +81,7 @@ public class YiDaHuaPayResponse {
                   确认结果 0x00 上传成功 0x01 非法账单
                 */
                 ByteUtils.toByte(i, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 }
