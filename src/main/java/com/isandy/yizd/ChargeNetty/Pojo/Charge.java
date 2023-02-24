@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
+import java.util.Date;
+
 @Document
 @Data
 @Accessors(chain = true)
@@ -12,8 +14,8 @@ public class Charge {
     @MongoId
     String id;
     String BCD;
-    int seq; //校验域(对应每支充电枪)
-    int muzzleNum; //枪号
+    int Seq; //校验域(对应每支充电枪)
+    int MuzzleNum; //枪号
                     /*
                       枪状态(周期上传)
                       0x00 离线
@@ -37,8 +39,10 @@ public class Charge {
     int Encryption; //加密标志
     String ChargeSeries; //电桩类型
     String Network; // 网络类型
-    String SIMCard; //运营商
-    String muzzleStatus; //枪状态（心跳包）
+    String SIMcard; //运营商
+    String MuzzleStatus; //枪状态（心跳包）
     double Consume; //消费金额
     int OldSeq; // 保存上一个seq值，方便对照
+    Date Login; //登陆时间
+
 }

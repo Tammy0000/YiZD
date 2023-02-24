@@ -1,21 +1,38 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.text.ParseException;
 import java.util.Date;
 
 @Component
 @Lazy
 public class YiDaHuaChargeOnTimer {
-    public void Start(YiChargeContext context, Channel channel) throws ParseException {
-        byte[] Data = context.getBCD();
+    @Resource
+    YiChargeBCD chargeBCD;
+
+    @Resource
+    ChargeMongo chargeMongo;
+
+    /**
+     * 对时
+     * @param strBCD strBCD
+     * @param channel channel
+     * @throws ParseException times
+     */
+    public void Start(String strBCD, Channel channel) throws ParseException {
+        byte[] Data = chargeBCD.getBytesBCD(strBCD);
         byte[] times = Cp56Time2a.toBytes(new Date());
-        byte[] timer = ResData.responseData(context, DaHuaCmdEnum.对时设置应答, new byte[]{
+        byte[] timer = ResData.responseData(DaHuaCmdEnum.对时设置应答, new byte[]{
                 Data[0],
                 Data[1],
                 Data[2],
@@ -31,7 +48,7 @@ public class YiDaHuaChargeOnTimer {
                 times[4],
                 times[5],
                 times[6],
-        }, context.getInt_sequence());
+        }, chargeMongo.findSeq(strBCD));
         ChannelSendData.Send(timer, channel);
     }
 }

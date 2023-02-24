@@ -1,10 +1,13 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 2023年1月29日19:17:08
@@ -15,16 +18,21 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 public class YiDaHuaChargeReboot {
+    @Resource
+    YiChargeBCD chargeBCD;
+
+    @Resource
+    ChargeMongo chargeMongo;
 
     /**
-     * @param context context
+     * @param strBCD strBCD
      * @param channel channel 需要对应netty的channel通道 channel
      * @param run 执行时间 true立即执行，反之
      */
-    public void Start(YiChargeContext context, Channel channel, boolean run) {
+    public void Start(String strBCD, Channel channel, boolean run) {
         byte time = (byte) (run ? 0x01:0x02);
-        byte[] BCD = context.getBCD();
-        byte[] reboot = ResData.responseData(context, DaHuaCmdEnum.远程重启, new byte[]{
+        byte[] BCD = chargeBCD.getBytesBCD(strBCD);
+        byte[] reboot = ResData.responseData(DaHuaCmdEnum.远程重启, new byte[]{
                 BCD[0],
                 BCD[1],
                 BCD[2],
@@ -38,18 +46,18 @@ public class YiDaHuaChargeReboot {
                 0x02空闲执行
                  */
                 time,
-        }, context.getInt_sequence());
+        }, chargeMongo.findSeq(strBCD));
         ChannelSendData.Send(reboot, channel);
     }
 
     /**
      *
-     * @param context context
+     * @param strBCD strBCD
      * @param channel channel 需要对应netty的channel通道 channel
      */
-    public void Start(YiChargeContext context, Channel channel) {
-        byte[] BCD = context.getBCD();
-        byte[] reboot = ResData.responseData(context, DaHuaCmdEnum.远程重启, new byte[]{
+    public void Start(String strBCD, Channel channel) {
+        byte[] BCD = chargeBCD.getBytesBCD(strBCD);
+        byte[] reboot = ResData.responseData(DaHuaCmdEnum.远程重启, new byte[]{
                 BCD[0],
                 BCD[1],
                 BCD[2],
@@ -64,7 +72,7 @@ public class YiDaHuaChargeReboot {
                 0x02空闲执行
                  */
                 ByteUtils.toByte(1, 1, false)[0],
-        }, context.getInt_sequence());
+        }, chargeMongo.findSeq(strBCD));
         ChannelSendData.Send(reboot, channel);
     }
 }

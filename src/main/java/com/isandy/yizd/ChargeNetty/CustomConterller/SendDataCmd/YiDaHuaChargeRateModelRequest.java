@@ -1,25 +1,34 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Component
 @Lazy
 public class YiDaHuaChargeRateModelRequest {
+    @Resource
+    YiChargeBCD chargeBCD;
+
+    @Resource
+    ChargeMongo mongo;
 
     /**
      * 充电桩计费模型请求
-     * @param context context
+     * @param strBCD strBCD
      */
-    public void Start(YiChargeContext context, Channel channel) {
-        byte[] BCD = context.getBCD();
+    public void Start(String strBCD, Channel channel) {
+        byte[] BCD = chargeBCD.getBytesBCD(strBCD);
         byte[] a00 = ByteUtils.toByte(0, 1, false);
         byte[] a06 = ByteUtils.toByte(600000, 4, false);
         byte[] a02 = ByteUtils.toByte(200000, 4, false);
-        byte[] bytes = ResData.responseData(context, DaHuaCmdEnum.计费模型请求应答, new byte[]{
+        byte[] bytes = ResData.responseData(DaHuaCmdEnum.计费模型请求应答, new byte[]{
                 BCD[0],
                 BCD[1],
                 BCD[2],
@@ -53,7 +62,7 @@ public class YiDaHuaChargeRateModelRequest {
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
-        }, context.getInt_sequence());
+        }, mongo.findSeq(strBCD));
         ChannelSendData.Send(bytes, channel);
     }
 }

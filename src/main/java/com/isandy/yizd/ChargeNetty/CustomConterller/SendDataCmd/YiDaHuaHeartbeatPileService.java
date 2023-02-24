@@ -22,7 +22,7 @@ public class YiDaHuaHeartbeatPileService {
     //Start代表的是回应发送
     public void Start(YiChargeContext context, Channel channel) {
         byte[] data = context.getMessage_body();
-        int seq = chargeMongo.findSeq(context.getStrBCD(), context.getMuzzleNum());
+        int seq = chargeMongo.findSeq(context.getStrBCD());
         byte[] PONG = ResData.responseData(DaHuaCmdEnum.心跳包Pong, new byte[]{
                 //BCD编码
                 data[0],
@@ -35,7 +35,7 @@ public class YiDaHuaHeartbeatPileService {
                 //0x01 枪号
                 data[7],
                 //0x00 心跳应答
-                data[8],
+//                data[8],
                 ByteUtils.toByte(0, 1)[0],
         }, seq);
         ChannelSendData.Send(PONG, channel);

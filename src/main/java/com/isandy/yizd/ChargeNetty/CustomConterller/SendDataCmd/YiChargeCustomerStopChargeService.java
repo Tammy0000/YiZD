@@ -1,9 +1,13 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
 import io.netty.channel.Channel;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 2023年1月16日21:48:37
@@ -12,17 +16,23 @@ import org.springframework.stereotype.Component;
  * 按需发送，主动请求
  */
 @Component
+@Lazy
 public class YiChargeCustomerStopChargeService {
+    @Resource
+    YiChargeBCD chargeBCD;
+
+    @Resource
+    ChargeMongo chargeMongo;
 
     /**
      *
-     * @param context context
+     * @param strBCD strBCD
      * @param muzzleNum 枪号
      * @param channel channel
      */
-    public void Start(YiChargeContext context, int muzzleNum, Channel channel) {
-        byte[] BCD = context.getBCD();
-        byte[] bytes = ResData.responseData(context, DaHuaCmdEnum.运营平台远程停机, new byte[]{
+    public void Start(String strBCD, int muzzleNum, Channel channel) {
+        byte[] BCD = chargeBCD.getBytesBCD(strBCD);
+        byte[] bytes = ResData.responseData(DaHuaCmdEnum.运营平台远程停机, new byte[]{
                 BCD[0],
                 BCD[1],
                 BCD[2],
@@ -34,7 +44,7 @@ public class YiChargeCustomerStopChargeService {
                   停止枪号
                 */
                 ByteUtils.toByte(muzzleNum, 1)[0],
-        }, context.getInt_sequence());
+        }, chargeMongo.findSeq(strBCD, muzzleNum));
         ChannelSendData.Send(bytes, channel);
     }
 }

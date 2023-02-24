@@ -45,7 +45,7 @@ public class ChargeApi {
         HashMap<String, Boolean> sb = new HashMap<>();
         try {
             ChargeRealMaps chargeMaps = realTimeHashtable.getChargeMaps(bcd);
-            startChargeService.Start(chargeMaps.getContext(), muzzleNum, chargeMaps.getChannel());
+            startChargeService.Start(bcd, muzzleNum, chargeMaps.getChannel());
             sb.put("result", true);
             return JSON.toJSONString(sb);
         } catch (Exception e) {

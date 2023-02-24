@@ -97,4 +97,24 @@ public class ChargeMongo implements ChargeImpl {
             return -1;
         }
     }
+
+    /**
+     * 新建一个提取公共Seq方法，理论上来说，1枪跟2枪Seq都可以用，只不过需要细化，如果不确定，就不写，留空
+     * @param strBCD strBCD
+     * @return int
+     * 2023年2月24日16:20:08
+     */
+    @Override
+    public int findSeq(String strBCD) {
+        Criteria criteria = new Criteria();
+        criteria.and("BCD").is(strBCD);
+        try {
+            Charge one = mongoTemplate.findOne(Query.query(criteria), Charge.class);
+            assert one != null;
+            return one.getPublicSeq();
+        } catch (Exception e) {
+            log.error("提取Seq失败,电桩不存在");
+            return -1;
+        }
+    }
 }

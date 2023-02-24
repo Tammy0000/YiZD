@@ -140,7 +140,7 @@ public class ChannelRealTimeHashtable {
      * 定时检查不活跃通道，并且删除
      * 5分钟执行一次
      */
-    @Scheduled(cron = "0 0/3 * * * ?")
+//    @Scheduled(cron = "0 0/3 * * * ?")
     public void AutoRemove() throws InterruptedException {
         try (Jedis Beanjedis = new Jedis(RedisAddress, RedisPort)) {
         /*
