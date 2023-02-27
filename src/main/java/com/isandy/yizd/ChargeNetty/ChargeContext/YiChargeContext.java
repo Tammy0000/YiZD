@@ -3,7 +3,7 @@ package com.isandy.yizd.ChargeNetty.ChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.Pojo.Charge;
+import com.isandy.yizd.ChargeNetty.Pojo.charge;
 import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -271,7 +271,7 @@ public class YiChargeContext {
 
 
     public void init(ByteBuf byteBuf) {
-        Charge charge = new Charge();
+        charge charge = new charge();
         try {
             this.byteBuf = byteBuf;
             int index = 0;
@@ -413,6 +413,7 @@ public class YiChargeContext {
                 byte[] error = new byte[1];
                 error[0] = this.message_body[25];
                 this.MuzzleError = ByteUtils.toInt(error);
+
             }
         } catch (Exception e) {
             log.error("0x33 远程启动充电初始化失败");
@@ -455,7 +456,7 @@ public class YiChargeContext {
                     Criteria criteria = new Criteria();
                     criteria.and("BCD").is(this.StrBCD);
                 Update update = new Update();
-                Charge one = mongos.findOne(Query.query(criteria), Charge.class);
+                com.isandy.yizd.ChargeNetty.Pojo.charge one = mongos.findOne(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
                 if (one == null){
                     charge.setBCD(this.StrBCD)
                             .setChargeSeries(this.ChargeSeries)
@@ -465,9 +466,9 @@ public class YiChargeContext {
                             .setPublicSeq(this.PublicSeq)
                             .setEncryption(ByteUtils.toInt(this.encryption))
                             .setSumMuzzle(this.SumMuzzle);
-                    mongos.remove(Query.query(criteria), Charge.class);
+                    mongos.remove(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
                     for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-                        Charge c = new Charge();
+                        com.isandy.yizd.ChargeNetty.Pojo.charge c = new charge();
                         /*
                         必须要浅拷贝，
                         直接赋值会报错
@@ -482,7 +483,7 @@ public class YiChargeContext {
                             .set("SIMCard", this.SIMCard)
                             .set("PublicSeq", this.PublicSeq)
                             .set("Encryption", ByteUtils.toInt(this.encryption));
-                    mongos.upsert(Query.query(criteria), update, Charge.class);
+                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
                 }
             }
         } catch (BeansException e) {
@@ -505,12 +506,12 @@ public class YiChargeContext {
                     Update update = new Update();
                     update.set("seq", this.int_sequence)
                             .set("MuzzleStatus", muzzle);
-                    mongos.upsert(Query.query(criteria), update, Charge.class);
+                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
                     Criteria criteria1 = new Criteria();
                     criteria1.and("BCD").is(this.StrBCD);
                     Update update1 = new Update();
                     update1.set("PublicSeq", this.int_sequence);
-                    mongos.updateMulti(Query.query(criteria1), update1, Charge.class);
+                    mongos.updateMulti(Query.query(criteria1), update1, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
             }
         } catch (Exception e) {
             log.error("0x03心跳包初始化失败");
@@ -685,7 +686,7 @@ public class YiChargeContext {
                     Criteria criteria = new Criteria();
                     criteria.and("BCD").is(this.getStrBCD())
                             .and("muzzleNum").is(this.getMuzzleNum());
-                    mongos.upsert(Query.query(criteria), update, Charge.class);
+                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
                 }
             } catch (Exception e) {
                 log.error("0x13桩实时状态初始化失败");

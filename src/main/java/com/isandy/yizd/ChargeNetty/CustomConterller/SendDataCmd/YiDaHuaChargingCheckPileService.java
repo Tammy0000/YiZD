@@ -32,20 +32,20 @@ public class YiDaHuaChargingCheckPileService {
      * @param check true 与平台一致， 反之不一致
      */
     public void Start(String strBCD, Channel channel, boolean check) {
-        byte[] data = chargeBCD.getBytesBCD(strBCD);
+        byte[] BCD = chargeBCD.getBytesBCD(strBCD);
         byte flag = check ? ByteUtils.toByte(0x00, 1)[0]:ByteUtils.toByte(0x01, 1)[0];
         byte[] JF = ResData.responseData(DaHuaCmdEnum.计费模型验证请求应答, new byte[]{
                 //BCD编码
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                data[4],
-                data[5],
-                data[6],
+                BCD[0],
+                BCD[1],
+                BCD[2],
+                BCD[3],
+                BCD[4],
+                BCD[5],
+                BCD[6],
                 //计费编号
-                data[7],
-                data[8],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
                 //0x00验证一致
                 //0x01验证不一致
                 flag,

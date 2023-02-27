@@ -10,7 +10,7 @@ import java.util.Date;
 @Document
 @Data
 @Accessors(chain = true)
-public class Charge {
+public class charge {
     @MongoId
     String id;
     String BCD;

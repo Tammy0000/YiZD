@@ -16,6 +16,9 @@ import java.util.Date;
 
 @Component
 @Lazy
+/*
+  对时设置
+ */
 public class YiDaHuaChargeOnTimer {
     @Resource
     YiChargeBCD chargeBCD;
@@ -32,7 +35,7 @@ public class YiDaHuaChargeOnTimer {
     public void Start(String strBCD, Channel channel) throws ParseException {
         byte[] Data = chargeBCD.getBytesBCD(strBCD);
         byte[] times = Cp56Time2a.toBytes(new Date());
-        byte[] timer = ResData.responseData(DaHuaCmdEnum.对时设置应答, new byte[]{
+        byte[] timer = ResData.responseData(DaHuaCmdEnum.对时设置, new byte[]{
                 Data[0],
                 Data[1],
                 Data[2],

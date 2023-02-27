@@ -1,5 +1,6 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.Pojo.ChargeMongo;
@@ -35,7 +36,6 @@ public class YiDaHuaHeartbeatPileService {
                 //0x01 枪号
                 data[7],
                 //0x00 心跳应答
-//                data[8],
                 ByteUtils.toByte(0, 1)[0],
         }, seq);
         ChannelSendData.Send(PONG, channel);

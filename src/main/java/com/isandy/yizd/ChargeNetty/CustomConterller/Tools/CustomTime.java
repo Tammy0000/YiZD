@@ -29,4 +29,9 @@ public class CustomTime {
             return null;
         }
     }
+
+    public static String toTime(Date date) {
+        SimpleDateFormat simple = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return simple.format(date);
+    }
 }

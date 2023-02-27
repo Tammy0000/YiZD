@@ -1,22 +1,29 @@
 package com.isandy.yizd.Controller.WebApi;
 
 import com.alibaba.fastjson2.JSON;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStartChargeService;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeOnTimer;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
 import com.isandy.yizd.dao.ChargeActiveStatusRedis;
 import com.isandy.yizd.dao.ChargeRealMaps;
 import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import io.netty.channel.Channel;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Set;
 
 @RequestMapping("/api")
+@RestController
+@Slf4j
 public class ChargeApi {
     @Resource
     ChargeActiveStatusRedis activeStatusRedis;
@@ -26,6 +33,15 @@ public class ChargeApi {
 
     @Resource
     YiChargeCustomerStartChargeService startChargeService;
+
+    @Resource
+    YiChargeChannel chargeChannel;
+
+    @Resource
+    YiDaHuaChargeOnTimer onTimer;
+
+    @Resource
+    YiDaHuaChargeReboot chargeReboot;
 
     @GetMapping("/status")
     String status(@RequestParam String bcd, @RequestParam String muzzleNum) {
@@ -72,6 +88,35 @@ public class ChargeApi {
         } else {
             is.put(0, null);
             return JSON.toJSONString(is);
+        }
+    }
+
+    @GetMapping("/onetime")
+    String onetime() {
+        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
+        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
+        for (Map.Entry<String, Channel> e: entries) {
+            String BCD = e.getKey();
+            Channel ch = e.getValue();
+            try {
+                onTimer.Start(BCD, ch);
+                log.info("对时的桩号是:"+BCD);
+            } catch (ParseException ex) {
+                log.info("对时失败");
+            }
+        }
+        return "对时完成";
+    }
+
+    @GetMapping("/reboot")
+    String reboot() {
+        String s = "32010600107331";
+        try {
+            Channel channel = chargeChannel.getChannel(s);
+            chargeReboot.Start(s, channel);
+            return "重启成功";
+        } catch (Exception e) {
+            return "重启失败";
         }
     }
 }

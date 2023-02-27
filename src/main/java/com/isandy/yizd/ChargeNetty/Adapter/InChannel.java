@@ -1,7 +1,9 @@
 package com.isandy.yizd.ChargeNetty.Adapter;
 
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
 import com.isandy.yizd.ChargeNetty.Filter.ChargeFilter;
-import com.isandy.yizd.dao.ChannelRealTimeHashtable;
+import com.isandy.yizd.ChargeNetty.Filter.CustomAdapter;
+import com.isandy.yizd.ChargeNetty.Filter.FilterAdapter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -19,10 +21,13 @@ import javax.annotation.Resource;
 @ChannelHandler.Sharable
 public class InChannel extends ChannelInboundHandlerAdapter {
     @Resource
-    ChannelRealTimeHashtable realTimeHashtable;
+    YiChargeChannel chargeChannel;
 
     @Resource
     ChargeFilter filter;
+
+    @Resource
+    CustomAdapter adapter;
 
     ByteBuf byteBuf = Unpooled.directBuffer();
 
@@ -35,7 +40,7 @@ public class InChannel extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         String s = StringUtils.substringBetween(ctx.channel().toString(), "R:/", "]");
-        realTimeHashtable.remove(ctx.channel());
+        chargeChannel.removeChannel(ctx.channel());
         log.info(s + ":离线了");
     }
 
@@ -43,7 +48,7 @@ public class InChannel extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         byteBuf = (ByteBuf) msg;
         Channel channel = ctx.channel();
-        filter.Start(channel, byteBuf);
+        filter.initaddFilterAdapter(channel, byteBuf, adapter);
     }
 
     @Override

@@ -9,19 +9,21 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Component
 @Slf4j
 public class ChargeMongo implements ChargeImpl {
-    @Autowired
+    @Resource
     MongoTemplate mongoTemplate;
 
     @Override
-    public void insertLogin(Charge charge) {
+    public void insertLogin(charge charge) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(charge.getBCD());
-        mongoTemplate.remove(Query.query(criteria), Charge.class);
+        mongoTemplate.remove(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
         for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-            Charge c = new Charge();
+            com.isandy.yizd.ChargeNetty.Pojo.charge c = new charge();
             /*
             必须要浅拷贝，
             直接赋值会报错
@@ -33,7 +35,7 @@ public class ChargeMongo implements ChargeImpl {
     }
 
     @Override
-    public boolean updateChargeStatus(String BCD, int MuzzleNum, Charge charge) {
+    public boolean updateChargeStatus(String BCD, int MuzzleNum, charge charge) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
@@ -48,16 +50,16 @@ public class ChargeMongo implements ChargeImpl {
         .set("SumCharge", charge.getSumCharge())
         .set("ChargeAddTime", charge.getChargeAddTime())
         .set("BatteryHighTemp", charge.getBatteryHighTemp());
-        return mongoTemplate.upsert(query, update, Charge.class).wasAcknowledged();
+        return mongoTemplate.upsert(query, update, com.isandy.yizd.ChargeNetty.Pojo.charge.class).wasAcknowledged();
     }
 
     @Override
-    public Charge findContext(String BCD, int MuzzleNum) {
+    public charge findContext(String BCD, int MuzzleNum) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
         Query query = Query.query(criteria);
-        return mongoTemplate.findOne(query, Charge.class);
+        return mongoTemplate.findOne(query, charge.class);
     }
 
     @Override
@@ -65,7 +67,7 @@ public class ChargeMongo implements ChargeImpl {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
-        return mongoTemplate.remove(Query.query(criteria), Charge.class).wasAcknowledged();
+        return mongoTemplate.remove(Query.query(criteria), charge.class).wasAcknowledged();
     }
 
     @Override
@@ -74,9 +76,9 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("SumMuzzle").is(sumMuzzle);
         Query query = Query.query(criteria);
-        Charge one = mongoTemplate.findOne(query, Charge.class);
+        charge one = mongoTemplate.findOne(query, charge.class);
         if (one == null) {
-            Charge charge = new Charge();
+            charge charge = new charge();
             charge.setSumMuzzle(sumMuzzle);
             charge.setBCD(BCD);
             mongoTemplate.insert(charge);
@@ -89,7 +91,7 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("muzzleNum").is(muzzleNum);
         try {
-            Charge one = mongoTemplate.findOne(Query.query(criteria), Charge.class);
+            charge one = mongoTemplate.findOne(Query.query(criteria), charge.class);
             assert one != null;
             return one.getSeq();
         } catch (Exception e) {
@@ -109,7 +111,7 @@ public class ChargeMongo implements ChargeImpl {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(strBCD);
         try {
-            Charge one = mongoTemplate.findOne(Query.query(criteria), Charge.class);
+            charge one = mongoTemplate.findOne(Query.query(criteria), charge.class);
             assert one != null;
             return one.getPublicSeq();
         } catch (Exception e) {
