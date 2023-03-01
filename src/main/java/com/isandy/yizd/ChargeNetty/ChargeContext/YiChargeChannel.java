@@ -3,6 +3,7 @@ package com.isandy.yizd.ChargeNetty.ChargeContext;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
@@ -46,5 +47,18 @@ public class YiChargeChannel {
 
     public Hashtable<String, Channel> getHashChannel() {
         return channels;
+    }
+
+    public ArrayList<String> getAllStrBCD() {
+        ArrayList<String> strings = new ArrayList<>();
+        if (!channels.isEmpty()) {
+            Set<Map.Entry<String, Channel>> entries = channels.entrySet();
+            for (Map.Entry<String, Channel> e: entries) {
+                strings.add(e.getKey());
+            }
+            return strings;
+        }else {
+            return null;
+        }
     }
 }

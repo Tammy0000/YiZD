@@ -1,8 +1,6 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
@@ -25,7 +23,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Component
 @Lazy
-public class YiChargeCustomerStartChargeService {
+public class YiDaHuaChargeStartChargeService {
     @Resource
     YiChargeBCD chargeBCD;
 

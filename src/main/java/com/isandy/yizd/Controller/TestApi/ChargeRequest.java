@@ -1,8 +1,8 @@
 package com.isandy.yizd.Controller.TestApi;
 
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStartChargeService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStopChargeService;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStartChargeService;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStopChargeService;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStatusRequest;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
@@ -43,13 +43,13 @@ public class ChargeRequest {
     YiDaHuaChargeReboot yiReboot;
 
     @Resource
-    YiChargeCustomerStopChargeService css;
+    YiDaHuaChargeStopChargeService css;
 
     @Resource
     ChargeActiveStatusRedis cars;
 
     @Resource
-    YiChargeCustomerStartChargeService startChargeService;
+    YiDaHuaChargeStartChargeService startChargeService;
 
     @Bean
     void ChargeRequestinit() {

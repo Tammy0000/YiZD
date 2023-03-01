@@ -3,7 +3,7 @@ package com.isandy.yizd.ChargeNetty.ChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
-import com.isandy.yizd.ChargeNetty.Pojo.charge;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeStatusMongo;
 import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Slf4j
@@ -271,7 +272,7 @@ public class YiChargeContext {
 
 
     public void init(ByteBuf byteBuf) {
-        charge charge = new charge();
+        ChargeStatusMongo chargeStatusMongo = new ChargeStatusMongo();
         try {
             this.byteBuf = byteBuf;
             int index = 0;
@@ -452,13 +453,11 @@ public class YiChargeContext {
                     byte[] num = new byte[1];
                     num[0] = this.message_body[8];
                     this.SumMuzzle = ByteUtils.toInt(num, false);
+                    //首次登陆，将Seq设为publicSeq
                     this.PublicSeq = this.int_sequence;
                     Criteria criteria = new Criteria();
                     criteria.and("BCD").is(this.StrBCD);
-                Update update = new Update();
-                com.isandy.yizd.ChargeNetty.Pojo.charge one = mongos.findOne(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
-                if (one == null){
-                    charge.setBCD(this.StrBCD)
+                    chargeStatusMongo.setBCD(this.StrBCD)
                             .setChargeSeries(this.ChargeSeries)
                             .setNetwork(this.Network)
                             .setSIMcard(this.SIMCard)
@@ -466,25 +465,17 @@ public class YiChargeContext {
                             .setPublicSeq(this.PublicSeq)
                             .setEncryption(ByteUtils.toInt(this.encryption))
                             .setSumMuzzle(this.SumMuzzle);
-                    mongos.remove(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
-                    for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-                        com.isandy.yizd.ChargeNetty.Pojo.charge c = new charge();
+                    mongos.remove(Query.query(criteria), ChargeStatusMongo.class);
+                    for (int i = 1; i < chargeStatusMongo.getSumMuzzle() + 1; i++) {
+                        ChargeStatusMongo c = new ChargeStatusMongo();
                         /*
                         必须要浅拷贝，
                         直接赋值会报错
                         */
-                        BeanUtils.copyProperties(charge, c);
+                        BeanUtils.copyProperties(chargeStatusMongo, c);
                         c.setMuzzleNum(i);
                         mongos.insert(c);
                     }
-                }else {
-                    update.set("ChargeSeries", this.ChargeSeries)
-                            .set("Network", this.Network)
-                            .set("SIMCard", this.SIMCard)
-                            .set("PublicSeq", this.PublicSeq)
-                            .set("Encryption", ByteUtils.toInt(this.encryption));
-                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
-                }
             }
         } catch (BeansException e) {
             log.error("0x01登陆初始化失败");
@@ -499,19 +490,19 @@ public class YiChargeContext {
                     muzzlestatus[0] = this.message_body[8];
                     int mu = ByteUtils.toInt(muzzlestatus, false);
                     String muzzle = mu > 0 ? "故障":"正常";
-                    int num = ByteUtils.toInt(muzzlenum);
                     Criteria criteria = new Criteria();
-                    criteria.and("BCD").is(this.StrBCD)
-                            .and("muzzleNum").is(num);
-                    Update update = new Update();
-                    update.set("seq", this.int_sequence)
-                            .set("MuzzleStatus", muzzle);
-                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
-                    Criteria criteria1 = new Criteria();
-                    criteria1.and("BCD").is(this.StrBCD);
-                    Update update1 = new Update();
-                    update1.set("PublicSeq", this.int_sequence);
-                    mongos.updateMulti(Query.query(criteria1), update1, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
+                    criteria.and("BCD").is(this.StrBCD);
+                criteria.and("MuzzleNum").is(this.MuzzleNum);
+                Update update = new Update();
+                update.set("BCD", this.StrBCD);
+                update.set("MuzzleNum", this.MuzzleNum);
+                update.set("MuzzleStatus", muzzle);
+                update.set("Seq", this.int_sequence);
+                mongos.upsert(Query.query(criteria), update, ChargeStatusMongo.class);
+                Criteria bcd = Criteria.where("BCD").is(this.StrBCD);
+                Update pub = new Update();
+                pub.set("PublicSeq", this.int_sequence);
+                mongos.updateMulti(Query.query(bcd), pub, ChargeStatusMongo.class);
             }
         } catch (Exception e) {
             log.error("0x03心跳包初始化失败");
@@ -681,12 +672,13 @@ public class YiChargeContext {
                         hard = "门打开";
                     }
                     this.HardwareFailure = hard;
+                    update.set("HardwareFailure", hard);
                     update.set("Consume", this.Consume);
-                    update.set("seq", this.int_sequence);
+                    update.set("Seq", this.int_sequence);
                     Criteria criteria = new Criteria();
                     criteria.and("BCD").is(this.getStrBCD())
-                            .and("muzzleNum").is(this.getMuzzleNum());
-                    mongos.upsert(Query.query(criteria), update, com.isandy.yizd.ChargeNetty.Pojo.charge.class);
+                            .and("MuzzleNum").is(this.getMuzzleNum());
+                    mongos.upsert(Query.query(criteria), update, ChargeStatusMongo.class);
                 }
             } catch (Exception e) {
                 log.error("0x13桩实时状态初始化失败");

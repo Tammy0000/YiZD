@@ -1,38 +1,30 @@
 package com.isandy.yizd.Controller.WebApi;
 
 import com.alibaba.fastjson2.JSON;
-import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeBCD;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStartChargeService;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStartChargeService;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeOnTimer;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
+import com.isandy.yizd.ChargeNetty.Pojo.ChargeStatusMongo;
 import com.isandy.yizd.dao.ChannelRealTimeHashtable;
-import com.isandy.yizd.dao.ChargeActiveStatusRedis;
-import com.isandy.yizd.dao.ChargeRealMaps;
-import com.isandy.yizd.dao.ChargeRealTimeStatus;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RequestMapping("/api")
 @RestController
 @Slf4j
 public class ChargeApi {
-    @Resource
-    ChargeActiveStatusRedis activeStatusRedis;
 
     @Resource
-    ChannelRealTimeHashtable realTimeHashtable;
-
-    @Resource
-    YiChargeCustomerStartChargeService startChargeService;
+    YiDaHuaChargeStartChargeService startChargeService;
 
     @Resource
     YiChargeChannel chargeChannel;
@@ -43,69 +35,45 @@ public class ChargeApi {
     @Resource
     YiDaHuaChargeReboot chargeReboot;
 
-    @GetMapping("/status")
-    String status(@RequestParam String bcd, @RequestParam String muzzleNum) {
-        String s = bcd + muzzleNum;
-        ChargeRealTimeStatus realTimeStatus = activeStatusRedis.getRealTimeStatus(s);
-        return JSON.toJSONString(realTimeStatus);
-    }
+    @Resource
+    MongoTemplate mongoTemplate;
 
     /**
-     * 
      * @param bcd 电桩编号
      * @param muzzleNum 电桩枪号
      * @return eg:'result:true'
      */
     @GetMapping("/start")
-    String checkcharge(@RequestParam String bcd, @RequestParam int muzzleNum) {
-        HashMap<String, Boolean> sb = new HashMap<>();
+    String startcharge(@RequestParam String bcd, @RequestParam int muzzleNum) {
         try {
-            ChargeRealMaps chargeMaps = realTimeHashtable.getChargeMaps(bcd);
-            startChargeService.Start(bcd, muzzleNum, chargeMaps.getChannel());
-            sb.put("result", true);
-            return JSON.toJSONString(sb);
+            Channel channel = chargeChannel.getChannel(bcd);
+            startChargeService.Start(bcd, muzzleNum, channel);
+            return "successful";
         } catch (Exception e) {
-            sb.put("result", false);
-            return JSON.toJSONString(sb);
+            log.error("充电失败");
+            return "Error";
         }
     }
 
     /**
-     * 获取所有在线电桩信息
-     * @return json格式，eg: '1：BCD编码'
+     * 获取所有在线电桩空闲枪
+     * (故障，充电中的电枪不算在内)
+     * @return json格式
      */
-    @GetMapping("/online")
+    @GetMapping("/freecharge")
     String online() {
-        Hashtable<String, Channel> hashtable = realTimeHashtable.CheckChannel();
-        HashMap<Integer, String> is = new HashMap<>();
-        if (!hashtable.isEmpty()) {
-            int num = 1;
-            for(Map.Entry<String, Channel> entry: hashtable.entrySet()) {
-                is.put(num, entry.getKey());
-                num ++;
-            }
-            return JSON.toJSONString(is);
-        } else {
-            is.put(0, null);
-            return JSON.toJSONString(is);
-        }
-    }
-
-    @GetMapping("/onetime")
-    String onetime() {
-        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
-        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
-        for (Map.Entry<String, Channel> e: entries) {
-            String BCD = e.getKey();
-            Channel ch = e.getValue();
-            try {
-                onTimer.Start(BCD, ch);
-                log.info("对时的桩号是:"+BCD);
-            } catch (ParseException ex) {
-                log.info("对时失败");
+        ArrayList<String> allStrBCD = chargeChannel.getAllStrBCD();
+        ArrayList<String> online = new ArrayList<>();
+        for (String s: allStrBCD) {
+            List<ChargeStatusMongo> statusMongos = mongoTemplate.find(Query.query(Criteria.where("BCD").is(s)),
+                    ChargeStatusMongo.class);
+            for (ChargeStatusMongo cg: statusMongos) {
+                if (cg.getMuzzleStatus().equals("空闲")) {
+                    online.add(JSON.toJSONString(cg));
+                }
             }
         }
-        return "对时完成";
+        return String.valueOf(online);
     }
 
     @GetMapping("/reboot")
@@ -118,5 +86,42 @@ public class ChargeApi {
         } catch (Exception e) {
             return "重启失败";
         }
+    }
+
+    @GetMapping("/check/all")
+    String checkall() {
+        ArrayList<String> strings = new ArrayList<>();
+        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
+        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
+        for (Map.Entry<String, Channel> e:entries) {
+            Criteria criteria = new Criteria();
+            criteria.and("BCD").is(e.getKey());
+            List<ChargeStatusMongo> mongoList = mongoTemplate.find(Query.query(criteria), ChargeStatusMongo.class);
+            for (ChargeStatusMongo go: mongoList) {
+                strings.add(JSON.toJSONString(go));
+            }
+        }
+        return String.valueOf(strings);
+    }
+
+    @GetMapping("/check/{bcd}/{num}")
+    String checkone(@PathVariable String bcd, @PathVariable int num) {
+        Criteria criteria = new Criteria();
+        criteria.and("BCD").is(bcd)
+                .and("MuzzleNum").is(num);
+        ChargeStatusMongo one = mongoTemplate.findOne(Query.query(criteria), ChargeStatusMongo.class);
+        return JSON.toJSONString(one);
+    }
+
+    @GetMapping("/onetime")
+    String OnTimer() throws ParseException {
+        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
+        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
+        for (Map.Entry<String, Channel> e:entries) {
+            String BCD = e.getKey();
+            Channel channel = e.getValue();
+            onTimer.Start(BCD, channel);
+        }
+        return "successful";
     }
 }

@@ -2,7 +2,6 @@ package com.isandy.yizd.ChargeNetty.Pojo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -18,48 +17,48 @@ public class ChargeMongo implements ChargeImpl {
     MongoTemplate mongoTemplate;
 
     @Override
-    public void insertLogin(charge charge) {
+    public void insertLogin(ChargeStatusMongo chargeStatusMongo) {
         Criteria criteria = new Criteria();
-        criteria.and("BCD").is(charge.getBCD());
-        mongoTemplate.remove(Query.query(criteria), com.isandy.yizd.ChargeNetty.Pojo.charge.class);
-        for (int i = 1; i < charge.getSumMuzzle() + 1; i++) {
-            com.isandy.yizd.ChargeNetty.Pojo.charge c = new charge();
+        criteria.and("BCD").is(chargeStatusMongo.getBCD());
+        mongoTemplate.remove(Query.query(criteria), ChargeStatusMongo.class);
+        for (int i = 1; i < chargeStatusMongo.getSumMuzzle() + 1; i++) {
+            ChargeStatusMongo c = new ChargeStatusMongo();
             /*
             必须要浅拷贝，
             直接赋值会报错
              */
-            BeanUtils.copyProperties(charge, c);
+            BeanUtils.copyProperties(chargeStatusMongo, c);
             c.setMuzzleNum(i);
             mongoTemplate.insert(c);
         }
     }
 
     @Override
-    public boolean updateChargeStatus(String BCD, int MuzzleNum, charge charge) {
+    public boolean updateChargeStatus(String BCD, int MuzzleNum, ChargeStatusMongo chargeStatusMongo) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
         Query query = Query.query(criteria);
         Update update = new Update();
         update
-        .set("MuzzleLink", charge.getMuzzleLink())
-        .set("MuzzleEC", charge.getMuzzleEC())
-        .set("MuzzleStatus", charge.getMuzzleStatus())
-        .set("MuzzleVolt", charge.getMuzzleVolt())
-        .set("LeftTime", charge.getLeftTime())
-        .set("SumCharge", charge.getSumCharge())
-        .set("ChargeAddTime", charge.getChargeAddTime())
-        .set("BatteryHighTemp", charge.getBatteryHighTemp());
-        return mongoTemplate.upsert(query, update, com.isandy.yizd.ChargeNetty.Pojo.charge.class).wasAcknowledged();
+        .set("MuzzleLink", chargeStatusMongo.getMuzzleLink())
+        .set("MuzzleEC", chargeStatusMongo.getMuzzleEC())
+        .set("MuzzleStatus", chargeStatusMongo.getMuzzleStatus())
+        .set("MuzzleVolt", chargeStatusMongo.getMuzzleVolt())
+        .set("LeftTime", chargeStatusMongo.getLeftTime())
+        .set("SumCharge", chargeStatusMongo.getSumCharge())
+        .set("ChargeAddTime", chargeStatusMongo.getChargeAddTime())
+        .set("BatteryHighTemp", chargeStatusMongo.getBatteryHighTemp());
+        return mongoTemplate.upsert(query, update, ChargeStatusMongo.class).wasAcknowledged();
     }
 
     @Override
-    public charge findContext(String BCD, int MuzzleNum) {
+    public ChargeStatusMongo findContext(String BCD, int MuzzleNum) {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
         Query query = Query.query(criteria);
-        return mongoTemplate.findOne(query, charge.class);
+        return mongoTemplate.findOne(query, ChargeStatusMongo.class);
     }
 
     @Override
@@ -67,7 +66,7 @@ public class ChargeMongo implements ChargeImpl {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(BCD)
                 .and("MuzzleNum").is(MuzzleNum);
-        return mongoTemplate.remove(Query.query(criteria), charge.class).wasAcknowledged();
+        return mongoTemplate.remove(Query.query(criteria), ChargeStatusMongo.class).wasAcknowledged();
     }
 
     @Override
@@ -76,12 +75,12 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("SumMuzzle").is(sumMuzzle);
         Query query = Query.query(criteria);
-        charge one = mongoTemplate.findOne(query, charge.class);
+        ChargeStatusMongo one = mongoTemplate.findOne(query, ChargeStatusMongo.class);
         if (one == null) {
-            charge charge = new charge();
-            charge.setSumMuzzle(sumMuzzle);
-            charge.setBCD(BCD);
-            mongoTemplate.insert(charge);
+            ChargeStatusMongo chargeStatusMongo = new ChargeStatusMongo();
+            chargeStatusMongo.setSumMuzzle(sumMuzzle);
+            chargeStatusMongo.setBCD(BCD);
+            mongoTemplate.insert(chargeStatusMongo);
         }
     }
 
@@ -91,7 +90,7 @@ public class ChargeMongo implements ChargeImpl {
         criteria.and("BCD").is(BCD)
                 .and("muzzleNum").is(muzzleNum);
         try {
-            charge one = mongoTemplate.findOne(Query.query(criteria), charge.class);
+            ChargeStatusMongo one = mongoTemplate.findOne(Query.query(criteria), ChargeStatusMongo.class);
             assert one != null;
             return one.getSeq();
         } catch (Exception e) {
@@ -111,7 +110,7 @@ public class ChargeMongo implements ChargeImpl {
         Criteria criteria = new Criteria();
         criteria.and("BCD").is(strBCD);
         try {
-            charge one = mongoTemplate.findOne(Query.query(criteria), charge.class);
+            ChargeStatusMongo one = mongoTemplate.findOne(Query.query(criteria), ChargeStatusMongo.class);
             assert one != null;
             return one.getPublicSeq();
         } catch (Exception e) {

@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  */
 @Component
 @Lazy
-public class YiChargeCustomerStopChargeService {
+public class YiDaHuaChargeStopChargeService {
     @Resource
     YiChargeBCD chargeBCD;
 
