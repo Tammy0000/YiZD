@@ -52,11 +52,5 @@ public class InChannel extends ChannelInboundHandlerAdapter {
         if (!ctx.channel().isActive()) {
             ctx.channel().close();
         }
-        /*
-        个人猜想就是异常离线会触发这里
-        待测试
-        2023年1月18日14:22:58
-         */
-//        crts.remove(ctx.channel());
     }
 }
