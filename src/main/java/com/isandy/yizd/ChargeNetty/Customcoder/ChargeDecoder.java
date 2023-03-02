@@ -1,14 +1,17 @@
 package com.isandy.yizd.ChargeNetty.Customcoder;
 
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -20,10 +23,23 @@ public class ChargeDecoder extends ByteToMessageDecoder {
 
     Hashtable<String, byte[]> channels = new Hashtable<>();
 
+    ArrayList<Integer> types = new ArrayList<>();
+
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> list) {
+        types.add(38);
+        types.add(17);
+        types.add(68); //0x13
+        types.add(166);
+        types.add(52); //0x23
+        types.add(34); //0x33
         //临时存储
         ByteBuf byteBuf = Unpooled.buffer();
+        CoderContext coderContext = new CoderContext();
+        coderContext.initCode(in);
+        byte[] typeData = coderContext.getTypeData();
+        int type = ByteUtils.toInt(typeData);
         /*
         记录一下坑爹的报文
         2023年1月28日16:01:38
@@ -44,37 +60,7 @@ public class ChargeDecoder extends ByteToMessageDecoder {
         // 2023年1月13日15:09:33
         byteBuf.writeBytes(in);
         int num = byteBuf.readableBytes();
-        if (num == 64) {
-            if (channels.isEmpty()) {
-                byte[] b64 = new byte[64];
-                for (int i = 0; i < num; i++) {
-                    b64[i] = byteBuf.readByte();
-                    channels.put(ctx.channel().toString(), b64);
-                }
-            }
-        } else if (num == 4) {
-            if (channels.containsKey(ctx.channel().toString())) {
-                byte[] b4 = new byte[4];
-                byte[] source = new byte[68];
-                for (int i = 0; i < 4; i++) {
-                    b4[i] = byteBuf.readByte();
-                }
-                byte[] b64s = channels.get(ctx.channel().toString());
-                System.arraycopy(b64s, 0, source, 0, b64s.length);
-                System.arraycopy(b4, 0, source, 64, b4.length);
-                byteBuf.clear();
-                byteBuf.writeBytes(source);
-                list.add(byteBuf);
-                channels.remove(ctx.channel().toString());
-            }
-        }
-        else if (num == 17) {
-            /*
-            解决心跳报文位置颠倒问题
-            例如: 原电桩报文内容是： 0a 68 0d d9 11 00 03 32 01 06 00 19 25 22 01 00 b0
-            正确报文格式是:68 0d d9 11 00 03 32 01 06 00 19 25 22 01 00 b0 0a
-            2023年1月28日21:51:18
-             */
+        if (num == 17) {
             if (byteBuf.readByte() == start[0]) {
                 byteBuf.resetReaderIndex();
                 list.add(byteBuf);
@@ -87,35 +73,53 @@ public class ChargeDecoder extends ByteToMessageDecoder {
                 }
                 byteBuf.clear();
                 byteBuf.writeBytes(bytes);
-                list.add(byteBuf);
-            }
-        }else if (num == 80) {
-            if(!channels.containsKey(ctx.channel().toString())) {
-                byte[] b80 = new byte[80];
-                for (int i = 0; i < num; i++) {
-                    b80[i] = byteBuf.readByte();
+                if (byteBuf.readByte() == start[0]) {
+                    byteBuf.resetReaderIndex();
+                    list.add(byteBuf);
                 }
-                log.info("----");
-                channels.put(ctx.channel().toString(), b80);
             }
-        } else if (num == 86) {
-            if (channels.containsKey(ctx.channel().toString())) {
-                byte[] b86 = new byte[86];
-                byte[] source = new byte[166];
-                for (int i = 0; i < 86; i++) {
-                    b86[i] = byteBuf.readByte();
+        } else if (type == DaHuaCmdEnum.心跳包Ping.getCmd() && num <= 17) {
+            filter(byteBuf, list, ctx.channel(), num);
+        } else if (type == DaHuaCmdEnum.交易记录.getCmd() && num <= 166) {
+            filter(byteBuf, list, ctx.channel(), num);
+        } else if (type == DaHuaCmdEnum.上传实时监测数据.getCmd() && num <= 68) {
+            filter(byteBuf, list, ctx.channel(), num);
+        } else if (type == DaHuaCmdEnum.登陆.getCmd() && num <= 38) {
+            filter(byteBuf, list, ctx.channel(), num);
+        } else if (type == DaHuaCmdEnum.对时设置应答.getCmd() && num <= 22) {
+            filter(byteBuf, list, ctx.channel(), num);
+        } else {
+            byte[] bytes = new byte[num];
+            for (int i = 0; i < num; i++) {
+                bytes[i] = byteBuf.readByte();
+            }
+            byteBuf.clear();
+            Set<Map.Entry<String, byte[]>> entries = channels.entrySet();
+            for (Map.Entry<String, byte[]> e: entries) {
+                if (types.contains(num + e.getValue().length)) {
+                    byteBuf.writeBytes(e.getValue());
+                    byteBuf.writeBytes(bytes);
+                    list.add(byteBuf);
+                    channels.remove(e.getKey());
                 }
-                byte[] b80s = channels.get(ctx.channel().toString());
-                System.arraycopy(b80s, 0, source, 0, b80s.length);
-                System.arraycopy(b86, 0, source, 80, b86.length);
-                byteBuf.clear();
-                byteBuf.writeBytes(source);
-                list.add(byteBuf);
-                channels.remove(ctx.channel().toString());
             }
         }
-        else {
+    }
+
+    private void filter(ByteBuf byteBuf, List<Object> list, Channel channel, int num){
+        if (types.contains(num)) {
+            byteBuf.resetReaderIndex();
             list.add(byteBuf);
+        }else {
+            byte[] bytes = new byte[num];
+            for (int i = 0; i < num; i++) {
+                bytes[i] = byteBuf.readByte();
+            }
+            if (!channels.containsKey(channel.toString()+num)) {
+                channels.put(channel.toString()+num, bytes);
+            } else {
+                channels.replace(channel.toString()+num, bytes);
+            }
         }
     }
 }

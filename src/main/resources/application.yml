@@ -1,6 +1,6 @@
 custom:
   NettyPort: 8768
-  RedisAddress: 10.0.0.1
+  RedisAddress: 10.0.0.6
   RedisPort: 6379
 
 server:

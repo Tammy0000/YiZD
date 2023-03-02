@@ -16,7 +16,7 @@ public class YiDaHuaChargeOnTimer {
     public void Start(YiChargeContext context, Channel channel) throws ParseException {
         byte[] Data = context.getBCD();
         byte[] times = Cp56Time2a.toBytes(new Date());
-        byte[] timer = ResData.responseData(context, DaHuaCmdEnum.对时设置应答, new byte[]{
+        byte[] timer = ResData.responseData(context, DaHuaCmdEnum.对时设置, new byte[]{
                 Data[0],
                 Data[1],
                 Data[2],
