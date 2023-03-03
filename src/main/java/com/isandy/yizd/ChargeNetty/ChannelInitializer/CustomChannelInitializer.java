@@ -8,6 +8,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import javax.websocket.Decoder;
 
 @Component
 public class CustomChannelInitializer extends ChannelInitializer<SocketChannel> {
