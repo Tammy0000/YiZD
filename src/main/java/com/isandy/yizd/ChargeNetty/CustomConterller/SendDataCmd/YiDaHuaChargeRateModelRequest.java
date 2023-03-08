@@ -1,7 +1,10 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
+import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
+import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -12,18 +15,18 @@ import javax.annotation.Resource;
 @Lazy
 public class YiDaHuaChargeRateModelRequest {
     @Resource
-    SearchSeq seq;
+    Redis redis;
 
     /**
      * 充电桩计费模型请求
-     * @param context context
+     * @param strBCD strBCD
      */
-    public void Start(YiChargeContext context, Channel channel) {
-        byte[] BCD = context.getBCD();
+    public void Start(String strBCD, Channel channel) {
+        byte[] BCD = ByteUtils.toByte(strBCD);
         byte[] a00 = ByteUtils.toByte(0, 1, false);
         byte[] a06 = ByteUtils.toByte(600000, 4, false);
         byte[] a02 = ByteUtils.toByte(200000, 4, false);
-        byte[] bytes = ResData.responseData(context, DaHuaCmdEnum.计费模型请求应答, new byte[]{
+        byte[] bytes = ResData.responseData(DaHuaCmdEnum.计费模型请求应答, new byte[]{
                 BCD[0],
                 BCD[1],
                 BCD[2],
@@ -57,7 +60,7 @@ public class YiDaHuaChargeRateModelRequest {
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
                 a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0], a00[0],
-        }, seq.find(context.getStrBCD()));
+        }, redis.getSeq(strBCD));
         ChannelSendData.Send(bytes, channel);
     }
 }

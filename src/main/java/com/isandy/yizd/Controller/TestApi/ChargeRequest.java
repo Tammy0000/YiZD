@@ -1,13 +1,11 @@
 package com.isandy.yizd.Controller.TestApi;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStartChargeService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiChargeCustomerStopChargeService;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStartChargeService;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStatusRequest;
-import com.isandy.yizd.dao.ChannelRealTimeHashtable;
-import com.isandy.yizd.dao.ChargeActiveStatusRedis;
-import com.isandy.yizd.dao.ChargeRealMaps;
-import com.isandy.yizd.dao.ChargeRealTimeStatus;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStopChargeService;
+import com.isandy.yizd.dao.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,49 +15,26 @@ import org.springframework.web.bind.annotation.RestController;
 import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
 
 @RestController
 @Slf4j
 public class ChargeRequest {
-    @Value("${custom.RedisAddress}")
-    String RedisAddress;
-
-    @Value("${custom.RedisPort}")
-    int RedisPort;
-
-    Jedis jedis;
+    @Resource
+    Redis redis;
 
     @Resource
-    ChannelRealTimeHashtable channelRealTimeHashtable;
-    @Resource
-    YiDaHuaChargeStatusRequest yirequest;
+    YiDaHuaChargeStopChargeService stopChargeService;
 
     @Resource
-    YiDaHuaChargeReboot yiReboot;
+    YiDaHuaChargeStartChargeService startChargeService;
 
     @Resource
-    YiChargeCustomerStopChargeService css;
-
-    @Resource
-    ChargeActiveStatusRedis cars;
-
-    @Resource
-    YiChargeCustomerStartChargeService startChargeService;
-
-    @Bean
-    void ChargeRequestinit() {
-        try {
-            jedis = new Jedis(RedisAddress, RedisPort);
-            jedis.set("test", "test");
-        } catch (Exception e) {
-           log.error("web中的Redis初始化失败");
-        }
-    }
+    YiChargeChannel chargeChannel;
 
     @GetMapping("/status/{BCD}")
     String OnLink(@PathVariable("BCD") String BCD) {
-        boolean b = channelRealTimeHashtable.CheckChannel(BCD);
-        if (b) {
+        if (chargeChannel.checkChannel(BCD)) {
             return "在线";
         }else {
             return "不在线";
@@ -87,20 +62,31 @@ public class ChargeRequest {
          */
         try {
             String s = BCD+muzzle;
-            ChargeRealTimeStatus crts = cars.getRealTimeStatus(s);
                 return String.format("""
                                 电桩编号: %s
-                                电桩枪号: %d
+                                电桩枪号: %s
                                 枪状态：%s
                                 插枪状态: %s
-                                累计充电时间: %d
-                                剩余时间: %d
-                                输出电压：%f
-                                输出电流：%f
-                                累计充电度数：%f
-                                电池组温度：%f""",
-                        BCD, crts.getMuzzleNum(), crts.getMuzzleStatus(), crts.getMuzzleLink(), crts.getChargeAddTime(),
-                        crts.getLeftTime(), crts.getMuzzleVolt(), crts.getMuzzleEC(), crts.getSumCharge(), crts.getBatteryHighTemp()
+                                累计充电时间: %s
+                                剩余时间: %s
+                                输出电压：%s
+                                输出电流：%s
+                                累计充电度数：%s
+                                已充金额：%s
+                                电池组温度：%s
+                                故障状态: %s
+                                桩类型： %s
+                                运营商: %s
+                                网络类型: %s
+                                """,
+                        redis.hget(s, "StrBCD"), redis.hget(s, "MuzzleNum"),
+                        redis.hget(s, "MuzzleWork"), redis.hget(s, "MuzzleLink"),
+                        redis.hget(s, "ChargeAddTime"), redis.hget(s, "LeftTime"),
+                        redis.hget(s, "MuzzleVolt"),
+                        redis.hget(s, "MuzzleEC"), redis.hget(s, "SumCharge"),
+                        redis.hget(s, "Consume"), redis.hget(s, "BatteryHighTemp"),
+                        redis.hget(s, "HardwareFailure"), redis.hget(s, "ChargeSeries"),
+                        redis.hget(s, "SIMCard"), redis.hget(s, "Network")
                 );
         } catch (Exception e) {
             return "暂时没查到该电桩信息";
@@ -112,7 +98,7 @@ public class ChargeRequest {
     }
 
     @GetMapping("/start/{BCD}/{muzzle}")
-    String adds(@PathVariable("BCD") String BCD, @PathVariable("muzzle") String muzzle) {
+    String adds(@PathVariable("BCD") String BCD, @PathVariable("muzzle") String muzzle) throws ParseException {
         /*
         为了方便测试用，这个特作如下如下用途。正式上线，必须删除
          */
@@ -129,7 +115,6 @@ public class ChargeRequest {
         /*
         --------------------------------------------------
          */
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         int i;
         try {
             i = Integer.parseInt(muzzle);
@@ -139,8 +124,7 @@ public class ChargeRequest {
         } catch (NumberFormatException e) {
             return "输入枪号或BCD编码有误";
         }
-        startChargeService.Start(chargeMaps.getContext(), i,
-                chargeMaps.getChannel());
+        startChargeService.Start(BCD, i, chargeChannel.getChannel(BCD), 30.22);
         return BCD+"发送充电命令完成";
     }
 
@@ -162,7 +146,6 @@ public class ChargeRequest {
         /*
         --------------------------------------------------
          */
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
         int i;
         try {
             i = Integer.parseInt(muzzle);
@@ -172,27 +155,7 @@ public class ChargeRequest {
         } catch (NumberFormatException e) {
             return "输入枪号或BCD编码有误";
         }
-        css.Start(chargeMaps.getContext(), i, chargeMaps.getChannel());
+        stopChargeService.Start(BCD, i, chargeChannel.getChannel(BCD));
         return "发送停止充电命令完成";
-    }
-
-    @GetMapping("/reboot/{BCD}")
-    String Reboot(@PathVariable("BCD") String BCD) {
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
-        yiReboot.Start(chargeMaps.getContext(), chargeMaps.getChannel());
-        return "发送重启电桩命令成功";
-    }
-
-    @GetMapping("/test/{BCD}")
-    String Test(@PathVariable("BCD") String BCD) {
-        ChargeRealMaps chargeMaps = channelRealTimeHashtable.getChargeMaps(BCD);
-        yirequest.Start(chargeMaps.getContext(), chargeMaps.getContext().getBCD(),
-                1, chargeMaps.getChannel(), Integer.parseInt(jedis.get(BCD)));
-        return "test";
-    }
-
-    @GetMapping("/find/")
-    String checks() {
-        return "";
     }
 }

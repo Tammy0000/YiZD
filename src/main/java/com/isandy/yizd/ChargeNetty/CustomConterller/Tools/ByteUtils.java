@@ -1,12 +1,16 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.Tools;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.*;
+import java.math.BigInteger;
 
 /**
  * description: 对象必须实现序列化
  * author: ckk
  * create: 2020-08-02 17:26
  */
+@Slf4j
 public class ByteUtils {
 
     private static final char[] HEX_CHAR = {'0', '1', '2', '3', '4', '5',
@@ -70,7 +74,7 @@ public class ByteUtils {
             baos.close();
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("对象转化异常");
+            log.info("对象转化异常");
             return null;
         }
 
@@ -88,7 +92,7 @@ public class ByteUtils {
             in.close();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-            System.out.println("对象转化异常");
+            log.info("对象转化异常");
             return null;
         }
 
@@ -111,6 +115,25 @@ public class ByteUtils {
      */
     public static byte[] toByte(int n, int byteLen) {
        return toByte(n, byteLen, true);
+    }
+
+    /**
+     *
+     * @param Str string转byte[]，传入字符串长度必须符合16进制格式且长度能整除2
+     * @return byte[]
+     */
+
+    public static byte[] toByte(String Str) {
+        int length = Str.length();
+        byte[] bytes = new byte[length / 2];
+        int k = 0;
+        for (int i = 0; i < length; i+=2) {
+            String substring = Str.substring(i, i + 2);
+            BigInteger bigInteger = new BigInteger(substring, 16);
+            bytes[k] = (byte) bigInteger.intValue();
+            k ++;
+        }
+        return bytes;
     }
 
     public static byte[] toByte(int n, int byteLen, Boolean isNeedReverse) {

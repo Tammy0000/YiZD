@@ -1,9 +1,8 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
+import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -17,8 +16,7 @@ import javax.annotation.Resource;
 @Component
 @Lazy
 public class YiDaHuaPayResponse {
-    @Resource
-    SearchSeq seq;
+
     /**
      * 默认正常账单
      * @param context context
@@ -26,7 +24,7 @@ public class YiDaHuaPayResponse {
      */
     public void Start(YiChargeContext context, Channel channel){
         byte[] PayData = context.getPayData();
-        byte[] bytes = ResData.responseData(context, DaHuaCmdEnum.交易记录确认, new byte[]{
+        byte[] bytes = ResData.responseData(DaHuaCmdEnum.交易记录确认, new byte[]{
                 /*
                   16位流水号，我个人理解就是从0x3b获取到的流水号。暂没测试
                   2023年1月16日21:14:35
@@ -52,7 +50,7 @@ public class YiDaHuaPayResponse {
                   确认结果 0x00 上传成功 0x01 非法账单
                 */
                 ByteUtils.toByte(0, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 
@@ -86,7 +84,7 @@ public class YiDaHuaPayResponse {
                   确认结果 0x00 上传成功 0x01 非法账单
                 */
                 ByteUtils.toByte(i, 1)[0],
-        }, seq.find(context.getStrBCD()));
+        }, context.getInt_sequence());
         ChannelSendData.Send(bytes, channel);
     }
 }

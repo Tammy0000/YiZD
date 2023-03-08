@@ -1,0 +1,21 @@
+create database Charge;
+create table t_Mange (
+    id int primary key auto_increment,
+    strbcd varchar(100),
+    muzzlenum int,
+    starttime datetime,
+    endtime datetime,
+    startmethod varchar(100),
+    consume double,
+    sumele double,
+    paytime datetime,
+    ordercode varchar(1000)
+);
+create table t_startCharge(
+    id int primary key auto_increment,
+    strbcd varchar(100),
+    muzzlenum int,
+    ordercode varchar(1000),
+    logintime datetime,
+    result varchar(100)
+)

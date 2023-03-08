@@ -1,16 +1,16 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.isandy.yizd.Service.CreateOrder;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.text.ParseException;
 
 /**
  * 2023年1月16日14:06:27
@@ -23,29 +23,28 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Lazy
-public class YiChargeCustomerStartChargeService {
-
+public class YiDaHuaChargeStartChargeService {
     /**
      * 余额
-     * 按照协议暂时默认为9999 （账户余额：9999）
+     * 按照协议暂时默认为10000（账户余额：100）
      */
-    private static final byte[] currentMoney = ByteUtils.toByte(999999, 4, false);
+    private static final byte[] currentMoney = ByteUtils.toByte(10000, 4, false);
 
     /**
      *
-     * @param context context
+     * @param strBCD strBCD
      * @param muzzleNum 枪号
      * @param channel channel
      * 默认金额9999.99元，慎用
      * 2023年2月15日13:13:21
      */
-    public void Start(YiChargeContext context, int muzzleNum, Channel channel) {
+    public void Start(String strBCD, int muzzleNum, Channel channel) {
         byte[] temp = new byte[2];
         temp[0] = 0x46;
         temp[1] = 0x22;
         int seq = ByteUtils.toInt(temp);
-        byte[] BCD = context.getBCD();
-        byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
+        byte[] BCD = ByteUtils.toByte(strBCD);
+        byte[] charge = ResData.responseData(DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
                 // 交易流水号
                 ByteUtils.toByte(0, 1)[0],
                 ByteUtils.toByte(0, 1)[0],
@@ -81,23 +80,24 @@ public class YiChargeCustomerStartChargeService {
                 currentMoney[0], currentMoney[1], currentMoney[2], currentMoney[3],
         }, seq);
         ChannelSendData.Send(charge, channel);
-        log.info("桩号："+context.getStrBCD()+","+muzzleNum+"号枪发送充电指令成功");
+        log.info("桩号："+strBCD+","+muzzleNum+"号枪发送充电指令成功");
     }
 
     /**
      *
-     * @param context context
+     * @param strBCD strBCD
      * @param muzzleNum 枪号
      * @param channel channel
      * @param Money 金额
      * 金额
      */
-    public void Start(YiChargeContext context, int muzzleNum, Channel channel, double Money) {
+    public void Start(String strBCD, int muzzleNum, Channel channel, double Money) throws ParseException {
         byte[] temp = new byte[2];
         temp[0] = 0x46;
         temp[1] = 0x22;
         int seq = ByteUtils.toInt(temp);
-        byte[] BCD = context.getBCD();
+        byte[] BCD = ByteUtils.toByte(strBCD);
+        byte[] order = CreateOrder.Create(strBCD, muzzleNum);
         /*
           在数据库存入的是保留两位小数点的金额
           例如数据库实际金额是12.34元，则发送电桩的数值是1234
@@ -105,24 +105,24 @@ public class YiChargeCustomerStartChargeService {
          */
         int mon = (int) (Money * 100);
         byte[] bytes_mon = ByteUtils.toByte(mon, 4, false);
-        byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
+        byte[] charge = ResData.responseData(DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
                 // 交易流水号
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
-                ByteUtils.toByte(0, 1)[0],
+                order[0],
+                order[1],
+                order[2],
+                order[3],
+                order[4],
+                order[5],
+                order[6],
+                order[7],
+                order[8],
+                order[9],
+                order[10],
+                order[11],
+                order[12],
+                order[13],
+                order[14],
+                order[15],
                 // 桩编号
                 BCD[0],
                 BCD[1],
@@ -147,7 +147,7 @@ public class YiChargeCustomerStartChargeService {
     }
 
     /**
-     * @param context context
+     * @param strBCD strBCD
      * @param PayData 交易流水
      * @param LogicCard 逻辑卡号
      * @param PhyCard 物理卡号
@@ -155,12 +155,12 @@ public class YiChargeCustomerStartChargeService {
      * @param channel channel
      * @param Money 金额
      */
-    public void Start(YiChargeContext context, byte[] PayData, byte[] LogicCard, byte[] PhyCard, int muzzleNum, Channel channel, double Money){
+    public void Start(String strBCD, byte[] PayData, byte[] LogicCard, byte[] PhyCard, int muzzleNum, Channel channel, double Money){
         byte[] temp = new byte[2];
         temp[0] = 0x46;
         temp[1] = 0x22;
         int seq = ByteUtils.toInt(temp);
-        byte[] BCD = context.getBCD();
+        byte[] BCD = ByteUtils.toByte(strBCD);
         /*
           在数据库存入的是保留两位小数点的金额
           例如数据库实际金额是12.34元，则发送电桩的数值是1234
@@ -168,7 +168,7 @@ public class YiChargeCustomerStartChargeService {
          */
         int mon = (int) (Money * 100);
         byte[] bytes_mon = ByteUtils.toByte(mon, 4, false);
-        byte[] charge = ResData.responseData(context, DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
+        byte[] charge = ResData.responseData(DaHuaCmdEnum.运营平台远程控制启机, new byte[]{
                 /*
                 交易流水
                 格式桩号（7bytes）+枪号（1byte）+年月日时分秒（6bytes）+自增序号（2bytes）

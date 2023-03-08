@@ -4,11 +4,12 @@ import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ChannelSendData;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.DaHuaCmdEnum;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ResData;
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
-import io.netty.buffer.ByteBuf;
+import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * 这个是计费模型验证请求 对应判别类型代码是0x05
@@ -19,54 +20,56 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 public class YiDaHuaChargingCheckPileService {
+    @Resource
+    Redis redis;
 
     /**
      *
      * @param check true 与平台一致， 反之不一致
      */
-    public void Start(YiChargeContext context, Channel channel, boolean check) {
-        byte[] data = context.getMessage_body();
+    public void Start(String strBCD, Channel channel, boolean check) {
+        byte[] BCD = ByteUtils.toByte(strBCD);
         byte flag = check ? ByteUtils.toByte(0x00, 1)[0]:ByteUtils.toByte(0x01, 1)[0];
-        byte[] JF = ResData.responseData(context, DaHuaCmdEnum.计费模型验证请求应答, new byte[]{
+        byte[] JF = ResData.responseData(DaHuaCmdEnum.计费模型验证请求应答, new byte[]{
                 //BCD编码
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                data[4],
-                data[5],
-                data[6],
+                BCD[0],
+                BCD[1],
+                BCD[2],
+                BCD[3],
+                BCD[4],
+                BCD[5],
+                BCD[6],
                 //计费编号
-                data[7],
-                data[8],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
                 //0x00验证一致
                 //0x01验证不一致
                 flag,
-        }, context.getInt_sequence());
+        }, redis.getSeq(strBCD));
         ChannelSendData.Send(JF, channel);
     }
 
     /**
      * 默认与平台一致。
      */
-    public void Start(YiChargeContext context, Channel channel) {
-        byte[] data = context.getMessage_body();
-        byte[] JF = ResData.responseData(context, DaHuaCmdEnum.计费模型验证请求应答, new byte[]{
+    public void Start(String strBCD, Channel channel) {
+        byte[] BCD = ByteUtils.toByte(strBCD);
+        byte[] JF = ResData.responseData(DaHuaCmdEnum.计费模型验证请求应答, new byte[]{
                 //BCD编码
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                data[4],
-                data[5],
-                data[6],
+                BCD[0],
+                BCD[1],
+                BCD[2],
+                BCD[3],
+                BCD[4],
+                BCD[5],
+                BCD[6],
                 //计费编号
-                data[7],
-                data[8],
+                ByteUtils.toByte(0, 1)[0],
+                ByteUtils.toByte(0, 1)[0],
                 //0x00验证一致
                 //0x01验证不一致
                 ByteUtils.toByte(0x00, 1)[0],
-        }, context.getInt_sequence());
+        }, redis.getSeq(strBCD));
         ChannelSendData.Send(JF, channel);
     }
 }

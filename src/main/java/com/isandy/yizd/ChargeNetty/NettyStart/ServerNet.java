@@ -4,6 +4,8 @@ import com.isandy.yizd.ChargeNetty.ChannelInitializer.CustomChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -28,7 +30,7 @@ public class ServerNet {
     int Port;
 
     @Bean
-    public void Start() {
+    public void Start() throws InterruptedException {
         log.info("开始初始化Netty");
         boss = new NioEventLoopGroup();
         worker = new NioEventLoopGroup();

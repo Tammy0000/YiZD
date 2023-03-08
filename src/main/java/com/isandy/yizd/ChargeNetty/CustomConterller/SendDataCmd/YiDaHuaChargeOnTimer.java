@@ -1,22 +1,34 @@
 package com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd;
 
-import com.isandy.yizd.ChargeNetty.CustomConterller.ChargeContext.YiChargeContext;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.*;
+import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Component
 @Lazy
+/*
+  对时设置
+ */
 public class YiDaHuaChargeOnTimer {
-    public void Start(YiChargeContext context, Channel channel) throws ParseException {
-        byte[] Data = context.getBCD();
+    @Resource
+    Redis redis;
+
+    /**
+     * 对时
+     * @param strBCD strBCD
+     * @param channel channel
+     * @throws ParseException times
+     */
+    public void Start(String strBCD, Channel channel) throws ParseException {
+        byte[] Data = ByteUtils.toByte(strBCD);
         byte[] times = Cp56Time2a.toBytes(new Date());
-        byte[] timer = ResData.responseData(context, DaHuaCmdEnum.对时设置, new byte[]{
+        byte[] timer = ResData.responseData(DaHuaCmdEnum.对时设置, new byte[]{
                 Data[0],
                 Data[1],
                 Data[2],
@@ -32,7 +44,7 @@ public class YiDaHuaChargeOnTimer {
                 times[4],
                 times[5],
                 times[6],
-        }, context.getInt_sequence());
+        }, redis.getSeq(strBCD));
         ChannelSendData.Send(timer, channel);
     }
 }

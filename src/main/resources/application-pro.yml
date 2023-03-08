@@ -1,0 +1,20 @@
+custom:
+  NettyPort: 8768
+  RedisAddress: 127.0.0.1
+  RedisPort: 6379
+  RedisPassword: 7307913.ttxx
+  MysqlPassword: 7307913.ttxx
+  MysqlURL: jdbc:mysql://127.0.0.1:33060/Charge?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
+  MysqlUsername: root
+  WebPort: 8686
+
+server:
+  port: "${custom.WebPort}"
+  shutdown: graceful
+
+spring:
+  datasource:
+    password: "${custom.MysqlPassword}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "${custom.MysqlURL}"
+    username: "${custom.MysqlUsername}"
