@@ -263,6 +263,65 @@ public class YiChargeContext {
      */
     String HardwareFailure;
 
+    /*
+    BMS信息
+     */
+
+    /**
+     * BMS 电压需求
+     */
+    double BMSVoltdemand;
+
+    /**
+     * BMS 电流需求
+     */
+    double BMSECdemand;
+
+    /**
+     * BMS 充电模式 0x01：恒压充电；0x02：恒流充电
+     */
+    String BMSChargeModel;
+
+    /**
+     * BMS 充电电压测量值
+     */
+    double BMSVoltMeasur;
+
+    /**
+     * BMS 充电电流测量值 -400 A 偏移量
+     */
+    double BMSECMeasur;
+
+    /**
+     * BMS 最高单体动力蓄电池电压
+     * 及组号
+     */
+    int BMSBatterModel;
+
+    /**
+     * BMS 当前荷电状态 SOC（ %）
+     */
+    int BMSBatterPercent;
+
+    /**
+     * BMS 估算剩余充电时间
+     */
+    int BMSRemainTime;
+
+    /**
+     * 电桩电压输出值
+     */
+    double BMSOutVolt;
+
+    /**
+     *电桩电流输出值 -400 A 偏移量
+     */
+    double BMSOutEC;
+
+    /**
+     * 累计充电时间
+     */
+    int BMSChargingTime;
 
     public void init(ByteBuf byteBuf) {
         try {
@@ -467,6 +526,7 @@ public class YiChargeContext {
                         redis.hset(this.StrBCD+i, "Login", CustomTime.time());
                         redis.hset(this.StrBCD+i, "StrBCD", this.StrBCD);
                     }
+                    redis.hdel(this.StrBCD, "onetime");
             }
         } catch (BeansException e) {
             log.error("0x01登陆初始化失败");
@@ -642,7 +702,7 @@ public class YiChargeContext {
                     byte[] bht = new byte[1];
                     bht[0] = this.message_body[41];
                     int bh = ByteUtils.toInt(bht, false);
-                    this.BatteryHighTemp = this.MuzzleWork == 3 ? bh - 50: 0 ;
+                    this.BatteryHighTemp = this.MuzzleWork == 3 ? bh : 0 ;
                     redis.hset(this.StrBCD + this.MuzzleNum, "BatteryHighTemp", String.valueOf(this.BatteryHighTemp));
                     byte[] consume = new byte[4];
                     consume[0] = this.message_body[54];
@@ -692,5 +752,67 @@ public class YiChargeContext {
             } catch (Exception e) {
                 log.error("0x13桩实时状态初始化失败");
             }
+        /*
+        充电桩BMS需求与充电机输出 0x23
+        实测0x23没什么鸟用，充电剩余时间不显示，只有充电百分比，还有充电时间,(还不如查看0x13)先埋坑吧。
+        Redis保存格式是:BMS+电桩编号BCD+枪号
+         */
+        try {
+            if (DaHuaCmdEnum.充电过程BMS需求与充电机输出.getCmd() == ByteUtils.toInt(this.TypeData)){
+                this.PayData = new byte[16];
+                System.arraycopy(this.message_body, 0, this.PayData, 0, 16);
+                byte[] number = new byte[1];
+                number[0] = this.message_body[23];
+                this.MuzzleNum = ByteUtils.toInt(number);
+                byte[] voltdemand = new byte[2];
+                System.arraycopy(this.message_body, 24, voltdemand, 0, 2);
+                this.BMSVoltdemand = (double) ByteUtils.toInt(voltdemand, false) / 10;
+                byte[] ecdemand = new byte[2];
+                System.arraycopy(this.message_body, 26, ecdemand, 0, 2);
+                this.BMSECdemand = (double) ByteUtils.toInt(ecdemand, false) / 10;
+                int model = ByteUtils.toInt(this.message_body[28], false);
+                this.BMSChargeModel = model > 1 ? "恒流充电":"恒压充电";
+                byte[] mevolt = new byte[2];
+                System.arraycopy(this.message_body, 29, mevolt, 0, 2);
+                this.BMSVoltMeasur = (double) ByteUtils.toInt(mevolt, false) / 10;
+                byte[] meec = new byte[2];
+                System.arraycopy(this.message_body, 31, meec, 0, 2);
+                this.BMSECMeasur = (double) ByteUtils.toInt(meec, false) / 10;
+                this.BMSECMeasur = this.BMSECMeasur > 0 ? this.BMSECMeasur : 0;
+                byte[] battermodel = new byte[2];
+                System.arraycopy(this.message_body, 33, battermodel, 0, 2);
+                this.BMSBatterModel = ByteUtils.toInt(battermodel, false);
+                this.BMSBatterPercent = ByteUtils.toInt(this.message_body[35], false);
+                byte[] sy = new byte[2];
+                System.arraycopy(this.message_body, 36, sy, 0, 2);
+                this.BMSRemainTime = ByteUtils.toInt(sy, false);
+                byte[] outvolt = new byte[2];
+                System.arraycopy(this.message_body, 38, outvolt, 0, 2);
+                this.BMSOutVolt = (double) ByteUtils.toInt(outvolt, false) / 10;
+                byte[] outec = new byte[2];
+                System.arraycopy(this.message_body, 40, outec, 0, 2);
+                this.BMSOutEC = (double) ByteUtils.toInt(outec, false) / 10;
+                byte[] chanrgingtime = new byte[2];
+                System.arraycopy(this.message_body, 42, chanrgingtime, 0, 2);
+                this.BMSChargingTime = ByteUtils.toInt(chanrgingtime, false);
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "StrBCD", this.StrBCD);
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "MuzzleNum", String.valueOf(this.MuzzleNum));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSVoltdemand", String.valueOf(this.BMSVoltdemand));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSECdemand", String.valueOf(this.BMSECdemand));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSChargeModel", this.BMSChargeModel);
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSVoltMeasur", String.valueOf(this.BMSVoltMeasur));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSECMeasur", String.valueOf(this.BMSECMeasur));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSECMeasur", String.valueOf(this.BMSECMeasur));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSBatterPercent", String.valueOf(this.BMSBatterPercent));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSRemainTime", String.valueOf(this.BMSRemainTime));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSRemainTime", String.valueOf(this.BMSRemainTime));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSOutVolt", String.valueOf(this.BMSOutVolt));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSOutEC", String.valueOf(this.BMSOutEC));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSChargingTime", String.valueOf(this.BMSChargingTime));
+                redis.hset("BMS"+this.StrBCD+this.MuzzleNum, "BMSBatterModel", String.valueOf(this.BMSBatterModel));
+            }
+        } catch (Exception e) {
+            log.error("0x23充电过程BMS需求与充电机输出初始化失败");
+        }
     }
 }

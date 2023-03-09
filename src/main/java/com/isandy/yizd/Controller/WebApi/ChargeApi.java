@@ -2,6 +2,7 @@ package com.isandy.yizd.Controller.WebApi;
 
 import com.alibaba.fastjson2.JSON;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaBillChargingSetting;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeOnTimer;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
 import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStartChargeService;
@@ -34,6 +35,9 @@ public class ChargeApi {
 
     @Resource
     YiDaHuaChargeReboot chargeReboot;
+
+    @Resource
+    YiDaHuaBillChargingSetting ChargingSetting;
 
     @Resource
     Redis redis;
@@ -150,6 +154,18 @@ public class ChargeApi {
             String BCD = e.getKey();
             Channel channel = e.getValue();
             onTimer.Start(BCD, channel);
+        }
+        return "successful";
+    }
+
+    @GetMapping("/jf")
+    String JF() {
+        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
+        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
+        for (Map.Entry<String, Channel> e:entries) {
+            String BCD = e.getKey();
+            Channel channel = e.getValue();
+            ChargingSetting.Start(BCD, channel);
         }
         return "successful";
     }

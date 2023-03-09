@@ -1,5 +1,5 @@
 custom:
-  profile: dev
+  profile: home
 
 spring:
   profiles:

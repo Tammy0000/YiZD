@@ -27,7 +27,7 @@ public class Redis {
     public void initRedis() {
         try {
             jedis = new Jedis(address, port);
-            if (!address.equals("10.0.0.6")){
+            if (!address.equals("10.0.0.6") && !address.equals("10.0.0.1")){
                 jedis.auth(Password);
             }
             jedis.set("Hello", "Java");
@@ -74,5 +74,13 @@ public class Redis {
 
     private void Test() {
 
+    }
+
+    public void hincrBy(String key, String field, long value) {
+        jedis.hincrBy(key, field, value);
+    }
+
+    public void hdel(String var1, String var2) {
+        jedis.hdel(var1, var2);
     }
 }

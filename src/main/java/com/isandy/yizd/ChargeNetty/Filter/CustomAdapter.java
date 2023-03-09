@@ -2,23 +2,28 @@ package com.isandy.yizd.ChargeNetty.Filter;
 
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeContext;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargingCheckPileService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaHeartbeatPileService;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaLoginRequest;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaPayResponse;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.*;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.ByteUtils;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.Cp56Time2a;
 import com.isandy.yizd.ChargeNetty.CustomConterller.Tools.CustomTime;
+import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
 import java.util.Date;
 
 @Slf4j
 @Component
 public class CustomAdapter extends FilterAdapter {
+    @Resource
+    Redis redis;
+
+    @Resource
+    YiDaHuaChargeOnTimer onTimer;
+
     @Resource
     YiDaHuaHeartbeatPileService pService;
 
@@ -48,6 +53,26 @@ public class CustomAdapter extends FilterAdapter {
         pService.Start(context, channel);
         log.info(CustomTime.time() +
                 "心跳包发送完成");
+        /*
+        采用自动校时，redis保存onetime信息，每发送一次心跳包就自增。达到一定数量就自动校时
+         */
+        String onetime = redis.hget(context.getStrBCD(), "onetime");
+        try {
+            if (onetime == null) {
+                onTimer.Start(context.getStrBCD(), channel);
+                redis.hset(context.getStrBCD(), "onetime", "0");
+            } else if (onetime.equals("50")) {
+                /*
+                12秒发送一次心跳包，50次即10分钟
+                 */
+                onTimer.Start(context.getStrBCD(), channel);
+                redis.hset(context.getStrBCD(), "onetime", "0");
+            }else {
+                redis.hincrBy(context.getStrBCD(), "onetime", 1);
+            }
+        } catch (ParseException e) {
+            log.info("0x3b中的对时失败，请检查");
+        }
     }
 
     @Override
@@ -98,5 +123,14 @@ public class CustomAdapter extends FilterAdapter {
     @Override
     public void cmd0x09(YiChargeContext context, Channel channel) {
         super.cmd0x09(context, channel);
+    }
+
+    @Override
+    public void cmd0x57(YiChargeContext context, Channel channel) {
+        String strBCD = context.getStrBCD();
+        byte[] message_body = context.getMessage_body();
+        int i = ByteUtils.toInt(message_body[7], false);
+        String su = i == 1 ? "计费设置成功":"计费设置失败";
+        log.info(su);
     }
 }
