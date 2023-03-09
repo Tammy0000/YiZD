@@ -2,8 +2,8 @@ custom:
   NettyPort: 8768
   RedisAddress: 127.0.0.1
   RedisPort: 6379
-  RedisPassword: 7307913.ttxx
-  MysqlPassword: 7307913.ttxx
+  RedisPassword: 123456
+  MysqlPassword: 123456
   MysqlURL: jdbc:mysql://127.0.0.1:33060/Charge?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
   MysqlUsername: root
   WebPort: 8686
