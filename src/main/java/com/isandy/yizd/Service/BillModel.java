@@ -107,6 +107,31 @@ public class BillModel {
         return data;
     }
 
+    public byte[] CoverBill(String StrBCD, double Cost, double CostServer){
+        byte[] data = new byte[90];
+        int cost = (int) (Cost * 100000);
+        int costserver = (int) (CostServer * 100000);
+        byte[] sc = ByteUtils.toByte(cost, 4, false);
+       byte[] sb = ByteUtils.toByte(costserver, 4, false);
+        byte[] bcd = ByteUtils.toByte(StrBCD);
+        byte[] jf = ByteUtils.toByte("0101");
+        System.arraycopy(bcd, 0, data, 0, 7);
+        System.arraycopy(jf, 0, data, 7, 2);
+        System.arraycopy(sc, 0, data, 9, 4);
+        System.arraycopy(sb, 0, data, 13, 4);
+        System.arraycopy(sc, 0, data, 17, 4);
+        System.arraycopy(sb, 0, data, 21, 4);
+        System.arraycopy(sc, 0, data, 25, 4);
+        System.arraycopy(sb, 0, data, 29, 4);
+        System.arraycopy(sc, 0, data, 33, 4);
+        System.arraycopy(sb, 0, data, 37, 4);
+        data[41] = ByteUtils.toByte(0, 1, false)[0];
+        for (int i = 42; i < 90; i++) {
+            data[i] = ByteUtils.toByte(1, 1, false)[0];
+        }
+        return data;
+    }
+
     private void cover(int Start, int end, int Series) {
         if (end - Start > 0) {
             for (int i = 0; i < (end - Start) * 2; i++) {

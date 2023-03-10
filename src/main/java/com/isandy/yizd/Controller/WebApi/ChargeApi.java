@@ -2,10 +2,7 @@ package com.isandy.yizd.Controller.WebApi;
 
 import com.alibaba.fastjson2.JSON;
 import com.isandy.yizd.ChargeNetty.ChargeContext.YiChargeChannel;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaBillChargingSetting;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeOnTimer;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeReboot;
-import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.YiDaHuaChargeStartChargeService;
+import com.isandy.yizd.ChargeNetty.CustomConterller.SendDataCmd.*;
 import com.isandy.yizd.Pojo.FreeCharge;
 import com.isandy.yizd.dao.Redis;
 import io.netty.channel.Channel;
@@ -40,6 +37,9 @@ public class ChargeApi {
     YiDaHuaBillChargingSetting ChargingSetting;
 
     @Resource
+    YiDaHuaChargeStopChargeService stopChargeService;
+
+    @Resource
     Redis redis;
 
     /**
@@ -48,10 +48,10 @@ public class ChargeApi {
      * @return eg:'result:true'
      */
     @GetMapping("/start")
-    String startcharge(@RequestParam String bcd, @RequestParam int muzzleNum) {
+    String startcharge(@RequestParam String bcd, @RequestParam int muzzleNum, @RequestParam double money) {
         try {
             Channel channel = chargeChannel.getChannel(bcd);
-            startChargeService.Start(bcd, muzzleNum, channel);
+            startChargeService.Start(bcd, muzzleNum, channel, money);
             return "successful";
         } catch (Exception e) {
             log.error("充电失败");
@@ -86,34 +86,18 @@ public class ChargeApi {
     }
 
     @GetMapping("/reboot")
-    String reboot() {
-        String s = "32010600107331";
+    String reboot(@RequestParam String bcd) {
         try {
-            Channel channel = chargeChannel.getChannel(s);
-            chargeReboot.Start(s, channel);
-            return "重启成功";
+            Channel channel = chargeChannel.getChannel(bcd);
+            chargeReboot.Start(bcd, channel);
+            return "发送重启命令成功";
         } catch (Exception e) {
-            return "重启失败";
+            return "发送重启命令失败";
         }
     }
 
-//    @GetMapping("/check/all")
-//    String checkall() {
-//        ArrayList<String> strings = new ArrayList<>();
-//        Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
-//        Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
-//        for (Map.Entry<String, Channel> e:entries) {
-//            ArrayList<String> bcdNum = redis.getBCDNum(e.getKey());
-//            for (String str: bcdNum) {
-//
-//            }
-//
-//        }
-//        return String.valueOf(strings);
-//    }
-
-    @GetMapping("/check/{bcd}/{num}")
-    String checkone(@PathVariable String bcd, @PathVariable int num) {
+    @GetMapping("/check")
+    String checkone(@RequestParam String bcd, @RequestParam int num) {
         if (num > 2 || bcd.length() != 14) {
             return "输入枪号或桩号有误";
         }else {
@@ -158,15 +142,58 @@ public class ChargeApi {
         return "successful";
     }
 
-    @GetMapping("/jf")
-    String JF() {
+    @GetMapping("/jf/all")
+    String JF(
+            @RequestParam int t1,
+            @RequestParam int t2,
+            @RequestParam int t3,
+            @RequestParam int t4,
+            @RequestParam int t5,
+            @RequestParam int t6,
+            @RequestParam int t7,
+            @RequestParam int t8,
+            @RequestParam double c1,
+            @RequestParam double c2,
+            @RequestParam double c3,
+            @RequestParam double c4,
+            @RequestParam double c5,
+            @RequestParam double c6,
+            @RequestParam double c7,
+            @RequestParam double c8
+    ) {
+        ArrayList<Integer> S = new ArrayList<>();
+        ArrayList<Integer> P = new ArrayList<>();
+        ArrayList<Integer> L = new ArrayList<>();
+        ArrayList<Integer> V = new ArrayList<>();
+        S.add(t1);S.add(t2);
+        P.add(t3);P.add(t4);
+        L.add(t5);L.add(t6);
+        V.add(t7);V.add(t8);
         Hashtable<String, Channel> hashChannel = chargeChannel.getHashChannel();
         Set<Map.Entry<String, Channel>> entries = hashChannel.entrySet();
         for (Map.Entry<String, Channel> e:entries) {
             String BCD = e.getKey();
             Channel channel = e.getValue();
-            ChargingSetting.Start(BCD, channel);
+            ChargingSetting.Start(BCD, channel, S, P, L, V, c1, c2, c3, c4, c5, c6, c7, c8);
         }
+        return "successful";
+    }
+
+    @GetMapping("/jf")
+    String customjf(@RequestParam String bcd, @RequestParam double cost, @RequestParam double costserver) {
+        try {
+            Channel channel = chargeChannel.getChannel(bcd);
+            ChargingSetting.Start(bcd, channel, cost, costserver);
+            return "successful";
+        } catch (Exception e) {
+            return "PathError";
+        }
+    }
+
+    @GetMapping("/stop")
+    String stop(@RequestParam String bcd, @RequestParam int muzzle) {
+        Channel channel = chargeChannel.getChannel(bcd);
+        stopChargeService.Start(bcd, muzzle, channel);
         return "successful";
     }
 }

@@ -70,7 +70,7 @@ public class YiDaHuaChargeReboot {
                 0x01立即执行
                 0x02空闲执行
                  */
-                ByteUtils.toByte(1, 1)[0],
+                ByteUtils.toByte(1, 1, false)[0],
         }, redis.getSeq(strBCD));
         ChannelSendData.Send(reboot, channel);
     }

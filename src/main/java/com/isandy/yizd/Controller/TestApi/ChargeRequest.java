@@ -124,7 +124,7 @@ public class ChargeRequest {
         } catch (NumberFormatException e) {
             return "输入枪号或BCD编码有误";
         }
-        startChargeService.Start(BCD, i, chargeChannel.getChannel(BCD), 30.22);
+        startChargeService.Start(BCD, i, chargeChannel.getChannel(BCD), 12.34);
         return BCD+"发送充电命令完成";
     }
 

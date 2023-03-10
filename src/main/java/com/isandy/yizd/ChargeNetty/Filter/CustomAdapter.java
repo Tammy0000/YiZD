@@ -115,9 +115,10 @@ public class CustomAdapter extends FilterAdapter {
 
     @Override
     public void cmd0x35(YiChargeContext context, Channel channel) {
-        log.info("开始验证交易请求回应");
-        payResponse.Start(context, channel);
-        log.info("交易验证请求发送完成");
+        byte stop = context.getMessage_body()[8];
+        int sp = ByteUtils.toInt(stop);
+        String var = sp == 1 ? "成功":"失败";
+        log.info("停止结果"+ var);
     }
 
     @Override
@@ -127,10 +128,15 @@ public class CustomAdapter extends FilterAdapter {
 
     @Override
     public void cmd0x57(YiChargeContext context, Channel channel) {
-        String strBCD = context.getStrBCD();
         byte[] message_body = context.getMessage_body();
         int i = ByteUtils.toInt(message_body[7], false);
         String su = i == 1 ? "计费设置成功":"计费设置失败";
         log.info(su);
+    }
+
+    @Override
+    public void cmd0x91(YiChargeContext context, Channel channel) {
+        byte b = context.getMessage_body()[7];
+        String s = ByteUtils.toInt(b, false) == 1 ? "重启成功":"重启失败";
     }
 }

@@ -27,7 +27,7 @@ public class Redis {
     public void initRedis() {
         try {
             jedis = new Jedis(address, port);
-            if (!address.equals("10.0.0.6") && !address.equals("10.0.0.1")){
+            if (!address.equals("10.0.0.1")){
                 jedis.auth(Password);
             }
             jedis.set("Hello", "Java");
